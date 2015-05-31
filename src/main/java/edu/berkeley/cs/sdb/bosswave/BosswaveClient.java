@@ -101,7 +101,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Frame f = builder.build();
         f.writeToStream(socket.getOutputStream());
-        installResultHandler(seqNo, handler);
+        installResponseHandler(seqNo, handler);
     }
 
     public void subscribe(SubscribeRequest request, ResponseHandler rh, ResultHandler sh) throws IOException {
@@ -147,14 +147,14 @@ public class BosswaveClient implements AutoCloseable {
         Frame f = builder.build();
         f.writeToStream(socket.getOutputStream());
         if (rh != null) {
-            installResultHandler(seqNo, rh);
+            installResponseHandler(seqNo, rh);
         }
         if (sh != null) {
             installResultHandler(uri, sh);
         }
     }
 
-    private void installResultHandler(int seqNo, ResponseHandler rh) {
+    private void installResponseHandler(int seqNo, ResponseHandler rh) {
         synchronized (responseHandlerLock) {
             responseHandlers.put(seqNo, rh);
         }
