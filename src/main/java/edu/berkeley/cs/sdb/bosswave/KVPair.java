@@ -3,7 +3,7 @@ package edu.berkeley.cs.sdb.bosswave;
 import java.io.IOException;
 import java.io.OutputStream;
 
-class KVPair {
+public class KVPair {
     private final String key;
     private final byte[] value;
 
@@ -20,7 +20,7 @@ class KVPair {
         return value.clone();
     }
 
-    public void writeToStream(OutputStream out) throws IOException {
+    void writeToStream(OutputStream out) throws IOException {
 
     }
 }

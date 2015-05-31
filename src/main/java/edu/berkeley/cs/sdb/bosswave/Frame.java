@@ -51,6 +51,10 @@ class Frame {
         return payloadObjects;
     }
 
+    public int getSeqNo() {
+        return seqNo;
+    }
+
     public static Frame readFromStream(InputStream stream) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
             String frameHeader = reader.readLine();

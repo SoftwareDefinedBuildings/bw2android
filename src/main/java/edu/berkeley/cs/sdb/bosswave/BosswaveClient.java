@@ -2,8 +2,11 @@ package edu.berkeley.cs.sdb.bosswave;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BosswaveClient implements AutoCloseable {
     private static final SimpleDateFormat Rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -12,12 +15,19 @@ public class BosswaveClient implements AutoCloseable {
     private final int port;
     private final Thread listenerThread;
 
+    private final Map<Integer, ResponseHandler> responseHandlers;
+    private final Object responseHandlerLock = new Object();
+    private final Map<String, ResultHandler> resultHandlers;
+    private final Object resultHandlersLock = new Object();
+
     private Socket socket;
 
     public BosswaveClient(String hostName, int port) {
         this.hostName = hostName;
         this.port = port;
         listenerThread = new Thread(new BWListener());
+        responseHandlers = new HashMap<>();
+        resultHandlers = new HashMap<>();
     }
 
     public void connect() throws IOException {
@@ -44,7 +54,7 @@ public class BosswaveClient implements AutoCloseable {
         socket.close();
     }
 
-    public void publish(PublishRequest request, Handler handler) throws IOException {
+    public void publish(PublishRequest request, ResponseHandler handler) throws IOException {
         Frame.Builder builder = new Frame.Builder();
 
         String uri = request.getUri();
@@ -91,9 +101,10 @@ public class BosswaveClient implements AutoCloseable {
 
         Frame f = builder.build();
         f.writeToStream(socket.getOutputStream());
+        installResultHandler(seqNo, handler);
     }
 
-    public void subscribe(SubscribeRequest request, Handler handler) throws IOException {
+    public void subscribe(SubscribeRequest request, ResponseHandler rh, ResultHandler sh) throws IOException {
         Frame.Builder builder = new Frame.Builder();
 
         String uri = request.getUri();
@@ -135,6 +146,24 @@ public class BosswaveClient implements AutoCloseable {
 
         Frame f = builder.build();
         f.writeToStream(socket.getOutputStream());
+        if (rh != null) {
+            installResultHandler(seqNo, rh);
+        }
+        if (sh != null) {
+            installResultHandler(uri, sh);
+        }
+    }
+
+    private void installResultHandler(int seqNo, ResponseHandler rh) {
+        synchronized (responseHandlerLock) {
+            responseHandlers.put(seqNo, rh);
+        }
+    }
+
+    private void installResultHandler(String uri, ResultHandler sh) {
+        synchronized (resultHandlersLock) {
+            resultHandlers.put(uri, sh);
+        }
     }
 
     private class BWListener implements Runnable {
@@ -143,6 +172,44 @@ public class BosswaveClient implements AutoCloseable {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Frame frame = Frame.readFromStream(socket.getInputStream());
+                    int seqNo = frame.getSeqNo();
+
+                    Command command = frame.getCommand();
+                    switch (command) {
+                        case RESPONSE: {
+                            ResponseHandler responseHandler;
+                            synchronized (responseHandlerLock) {
+                                responseHandler = responseHandlers.get(seqNo);
+                            }
+                            if (responseHandler != null) {
+                                String status = new String(frame.getFirstValue("status"), StandardCharsets.UTF_8);
+                                String reason = null;
+                                if (!status.equals("okay")) {
+                                    reason = new String(frame.getFirstValue("reason"), StandardCharsets.UTF_8);
+                                }
+                                responseHandler.onResponseReceived(new Response(status, reason));
+                            }
+                            break;
+                        }
+
+                        case RESULT: {
+                            String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
+                            ResultHandler resultHandler;
+                            synchronized (resultHandlersLock) {
+                                resultHandler = resultHandlers.get(uri);
+                            }
+                            if (resultHandler != null) {
+                                String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
+                                Result result = new Result(from, uri, frame.getRoutingObjects(),
+                                        frame.getPayloadObjects());
+                                resultHandler.onResultReceived(result);
+                            }
+                            break;
+                        }
+
+                        default:
+                            // Ignore frames with any other commands
+                    }
                 } catch (InvalidFrameException e) {
                     // Ignore invalid frames
                 } catch (IOException e) {

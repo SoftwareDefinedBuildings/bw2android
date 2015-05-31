@@ -3,7 +3,7 @@ package edu.berkeley.cs.sdb.bosswave;
 import java.io.IOException;
 import java.io.OutputStream;
 
-class RoutingObject {
+public class RoutingObject {
     private final byte routingObjNum;
     private final byte[] content;
 
@@ -12,7 +12,7 @@ class RoutingObject {
         this.content = content;
     }
 
-    public void writeToStream(OutputStream stream) throws IOException {
+    void writeToStream(OutputStream stream) throws IOException {
         
     }
 }

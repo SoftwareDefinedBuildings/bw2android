@@ -3,7 +3,7 @@ package edu.berkeley.cs.sdb.bosswave;
 import java.io.IOException;
 import java.io.OutputStream;
 
-class PayloadObject {
+public class PayloadObject {
     private final Type id;
     private final byte[] content;
 
@@ -12,7 +12,7 @@ class PayloadObject {
         this.content = content;
     }
 
-    public void writeToStream(OutputStream out) throws IOException {
+    void writeToStream(OutputStream out) throws IOException {
 
     }
 
@@ -55,7 +55,7 @@ class PayloadObject {
             return octetBytes;
         }
 
-        public static Type fromString(String str) {
+        static Type fromString(String str) {
             if (str.startsWith(":")) {
                 int poNum;
                 try {
