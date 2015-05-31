@@ -17,7 +17,7 @@ public class BosswaveClient implements AutoCloseable {
 
     private final Map<Integer, ResponseHandler> responseHandlers;
     private final Object responseHandlerLock = new Object();
-    private final Map<String, ResultHandler> resultHandlers;
+    private final Map<Integer, MessageHandler> messageHandlers;
     private final Object resultHandlersLock = new Object();
 
     private Socket socket;
@@ -27,7 +27,7 @@ public class BosswaveClient implements AutoCloseable {
         this.port = port;
         listenerThread = new Thread(new BWListener());
         responseHandlers = new HashMap<>();
-        resultHandlers = new HashMap<>();
+        messageHandlers = new HashMap<>();
     }
 
     public void connect() throws IOException {
@@ -104,7 +104,7 @@ public class BosswaveClient implements AutoCloseable {
         installResponseHandler(seqNo, handler);
     }
 
-    public void subscribe(SubscribeRequest request, ResponseHandler rh, ResultHandler sh) throws IOException {
+    public void subscribe(SubscribeRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
         Frame.Builder builder = new Frame.Builder();
 
         String uri = request.getUri();
@@ -149,8 +149,8 @@ public class BosswaveClient implements AutoCloseable {
         if (rh != null) {
             installResponseHandler(seqNo, rh);
         }
-        if (sh != null) {
-            installResultHandler(uri, sh);
+        if (mh != null) {
+            installMessageHandler(seqNo, mh);
         }
     }
 
@@ -160,9 +160,9 @@ public class BosswaveClient implements AutoCloseable {
         }
     }
 
-    private void installResultHandler(String uri, ResultHandler sh) {
+    private void installMessageHandler(int seqNo, MessageHandler mh) {
         synchronized (resultHandlersLock) {
-            resultHandlers.put(uri, sh);
+            messageHandlers.put(seqNo, mh);
         }
     }
 
@@ -193,16 +193,16 @@ public class BosswaveClient implements AutoCloseable {
                         }
 
                         case RESULT: {
-                            String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
-                            ResultHandler resultHandler;
+                            MessageHandler resultHandler;
                             synchronized (resultHandlersLock) {
-                                resultHandler = resultHandlers.get(uri);
+                                resultHandler = messageHandlers.get(seqNo);
                             }
                             if (resultHandler != null) {
+                                String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
                                 String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
-                                Result result = new Result(from, uri, frame.getRoutingObjects(),
+                                Message msg = new Message(from, uri, frame.getRoutingObjects(),
                                         frame.getPayloadObjects());
-                                resultHandler.onResultReceived(result);
+                                resultHandler.onResultReceived(msg);
                             }
                             break;
                         }

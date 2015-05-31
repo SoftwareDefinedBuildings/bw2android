@@ -3,13 +3,13 @@ package edu.berkeley.cs.sdb.bosswave;
 import java.util.Collections;
 import java.util.List;
 
-public class Result {
+public class Message {
     private final String from;
     private final String uri;
     private final List<RoutingObject> routingObjects;
     private final List<PayloadObject> payloadObjects;
 
-    public Result(String from, String uri, List<RoutingObject> ros, List<PayloadObject> pos) {
+    public Message(String from, String uri, List<RoutingObject> ros, List<PayloadObject> pos) {
         this.from = from;
         this.uri = uri;
         routingObjects = Collections.unmodifiableList(ros);
