@@ -2,18 +2,22 @@ package edu.berkeley.cs.sdb.bosswave;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class PayloadObject {
-    private final Type id;
+    private final Type type;
     private final byte[] content;
 
-    public PayloadObject(Type id, byte[] content) {
-        this.id = id;
+    public PayloadObject(Type type, byte[] content) {
+        this.type = type;
         this.content = content;
     }
 
     void writeToStream(OutputStream out) throws IOException {
-
+        String header = String.format("po %s %d\n", type, content.length);
+        out.write(header.getBytes(StandardCharsets.UTF_8));
+        out.write(content);
+        out.write('\n');
     }
 
     public static class Type {
