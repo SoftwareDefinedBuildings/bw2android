@@ -61,7 +61,7 @@ public class SubscribeRequest {
     }
 
     public class Builder {
-        private final String uri;
+        private String uri;
         private Date expiry;
         private Long expiryDelta;
         private boolean doVerify;
@@ -74,7 +74,12 @@ public class SubscribeRequest {
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             routingObjects = new ArrayList<>();
-            leavePacked = true;
+            leavePacked = false;
+        }
+
+        public Builder setUri(String uri) {
+            this.uri = uri;
+            return this;
         }
 
         public Builder setExpiry(Date expiry) {

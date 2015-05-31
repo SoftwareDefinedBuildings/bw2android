@@ -55,7 +55,11 @@ public class BosswaveClient implements AutoCloseable {
     }
 
     public void publish(PublishRequest request, ResponseHandler handler) throws IOException {
-        Frame.Builder builder = new Frame.Builder();
+        Command command = Command.PUBLISH;
+        if (request.isPersist()) {
+            command = Command.PERSIST;
+        }
+        Frame.Builder builder = new Frame.Builder(command);
 
         String uri = request.getUri();
         builder.addKVPair("uri", uri);
@@ -105,7 +109,7 @@ public class BosswaveClient implements AutoCloseable {
     }
 
     public void subscribe(SubscribeRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
-        Frame.Builder builder = new Frame.Builder();
+        Frame.Builder builder = new Frame.Builder(Command.SUBSCRIBE);
 
         String uri = request.getUri();
         builder.addKVPair("uri", uri);
@@ -193,16 +197,24 @@ public class BosswaveClient implements AutoCloseable {
                         }
 
                         case RESULT: {
-                            MessageHandler resultHandler;
+                            MessageHandler messageHandler;
                             synchronized (resultHandlersLock) {
-                                resultHandler = messageHandlers.get(seqNo);
+                                messageHandler = messageHandlers.get(seqNo);
                             }
-                            if (resultHandler != null) {
+                            if (messageHandler != null) {
                                 String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
                                 String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
-                                Message msg = new Message(from, uri, frame.getRoutingObjects(),
-                                        frame.getPayloadObjects());
-                                resultHandler.onResultReceived(msg);
+                                boolean unpack;
+                                String unpackStr = new String(frame.getFirstValue("unpack"), StandardCharsets.UTF_8);
+                                unpack = Boolean.parseBoolean(unpackStr);
+
+                                Message msg;
+                                if (unpack) {
+                                    msg = new Message(from, uri, frame.getRoutingObjects(), frame.getPayloadObjects());
+                                } else {
+                                    msg = new Message(from, uri, null, null);
+                                }
+                                messageHandler.onResultReceived(msg);
                             }
                             break;
                         }

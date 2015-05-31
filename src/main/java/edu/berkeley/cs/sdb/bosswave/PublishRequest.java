@@ -68,7 +68,7 @@ public class PublishRequest {
     }
 
     public class Builder {
-        private final String uri;
+        private String uri;
         private boolean persist;
         private Date expiry;
         private Long expiryDelta;
@@ -83,6 +83,11 @@ public class PublishRequest {
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             routingObjects = new ArrayList<>();
             payloadObjects = new ArrayList<>();
+        }
+
+        public Builder setUri(String uri) {
+            this.uri = uri;
+            return this;
         }
 
         public Builder setPersist(boolean persist) {
@@ -113,6 +118,13 @@ public class PublishRequest {
         public Builder addPayloadObject(PayloadObject po) {
             payloadObjects.add(po);
             return this;
+        }
+
+        public void clear() {
+            doVerify = false;
+            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            routingObjects.clear();
+            payloadObjects.clear();
         }
     }
 }

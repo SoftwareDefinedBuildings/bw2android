@@ -192,7 +192,8 @@ class Frame {
         private final List<RoutingObject> routingObjects;
         private final List<PayloadObject> payloadObjects;
 
-        public Builder() {
+        public Builder(Command command) {
+            this.command = command;
             kvPairs = new ArrayList<>();
             routingObjects = new ArrayList<>();
             payloadObjects = new ArrayList<>();
@@ -231,6 +232,12 @@ class Frame {
         public Builder addPayloadObject(PayloadObject po) {
             payloadObjects.add(po);
             return this;
+        }
+
+        public void clear() {
+            kvPairs.clear();
+            routingObjects.clear();
+            payloadObjects.clear();
         }
 
         public Frame build() {
