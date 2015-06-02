@@ -109,7 +109,7 @@ public class PayloadObject {
         @Override
         public String toString() {
             if (octet != null && number > 0) {
-                return String.format("%d.%d.%d,%d:%d", octet[0], octet[1], octet[2], octet[3], number);
+                return String.format("%d.%d.%d.%d:%d", octet[0], octet[1], octet[2], octet[3], number);
             } else if (octet != null) {
                 return String.format("%d.%d.%d.%d:", octet[0], octet[1], octet[2], octet[3]);
             } else {
