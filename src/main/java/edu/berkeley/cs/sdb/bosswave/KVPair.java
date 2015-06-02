@@ -22,11 +22,7 @@ public class KVPair {
     }
 
     void writeToStream(OutputStream out) throws IOException {
-        String contentLength = Integer.toString(value.length);
-        // 6 extra characters: 2 for "kv", 2 spaces in header, and 2 '\n' chars surrounding content
-        int totalLength = key.length() + contentLength.length() + value.length + 6;
-
-        String header = String.format("kv %s %s\n", key, totalLength);
+        String header = String.format("kv %s %d\n", key, value.length);
         out.write(header.getBytes(StandardCharsets.UTF_8));
         out.write(value);
         out.write('\n');
