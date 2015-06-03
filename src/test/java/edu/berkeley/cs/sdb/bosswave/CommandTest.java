@@ -1,9 +1,12 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class CommandTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class CommandTest {
+
+    @Test
     public void testFromCode() {
         for (Command command : Command.values()) {
             assertEquals(Command.fromCode(command.getCode()), command);

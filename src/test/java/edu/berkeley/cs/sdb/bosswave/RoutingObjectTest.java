@@ -1,15 +1,19 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class RoutingObjectTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
-    public void testWriteToStream() throws Exception {
+public class RoutingObjectTest {
+
+    @Test
+    public void testWriteToStream() throws IOException {
         String content = "testRoutingObject";
-        RoutingObject ro = new RoutingObject((byte)210, content.getBytes(StandardCharsets.UTF_8));
+        RoutingObject ro = new RoutingObject(210, content.getBytes(StandardCharsets.UTF_8));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ro.writeToStream(out);

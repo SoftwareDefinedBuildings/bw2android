@@ -1,13 +1,16 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class PayloadObjectTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class PayloadObjectTest {
+
+    @Test
     public void testWriteToStreamDotType() throws IOException {
         PayloadObject.Type type = new PayloadObject.Type(new byte[]{1, 2, 3, 4});
         String content = "testPayloadObject";
@@ -21,7 +24,7 @@ public class PayloadObjectTest extends TestCase {
         assertEquals(expectedOutput, actualOutput);
     }
 
-
+    @Test
     public void testWriteToStreamNumType() throws IOException {
         PayloadObject.Type type = new PayloadObject.Type(410);
         String content = "testPayloadObject";
@@ -35,6 +38,7 @@ public class PayloadObjectTest extends TestCase {
         assertEquals(expectedOutput, actualOutput);
     }
 
+    @Test
     public void testWriteToStreamBothType() throws IOException {
         PayloadObject.Type type = new PayloadObject.Type(new byte[]{1, 2, 3, 4}, 410);
         String content = "testPayloadObject";

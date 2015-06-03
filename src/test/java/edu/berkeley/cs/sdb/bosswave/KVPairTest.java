@@ -1,13 +1,16 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class KVPairTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class KVPairTest {
+
+    @Test
     public void testWriteToStream() throws IOException {
         KVPair pair = new KVPair("testKey", "testValue".getBytes(StandardCharsets.UTF_8));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
