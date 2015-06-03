@@ -59,13 +59,11 @@ public class BosswaveClient implements AutoCloseable {
         if (request.isPersist()) {
             command = Command.PERSIST;
         }
-        Frame.Builder builder = new Frame.Builder(command);
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(command, seqNo);
 
         String uri = request.getUri();
         builder.addKVPair("uri", uri);
-
-        int seqNo = Frame.generateSequenceNumber();
-        builder.setSeqNo(seqNo);
 
         if (request.isPersist()) {
             builder.setCommand(Command.PERSIST);
@@ -109,13 +107,11 @@ public class BosswaveClient implements AutoCloseable {
     }
 
     public void subscribe(SubscribeRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
-        Frame.Builder builder = new Frame.Builder(Command.SUBSCRIBE);
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.SUBSCRIBE, seqNo);
 
         String uri = request.getUri();
         builder.addKVPair("uri", uri);
-
-        int seqNo = Frame.generateSequenceNumber();
-        builder.setSeqNo(seqNo);
 
         Date expiryTime = request.getExpiry();
         if (expiryTime != null) {

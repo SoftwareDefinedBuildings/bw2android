@@ -3,6 +3,7 @@ package edu.berkeley.cs.sdb.bosswave;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class PayloadObject {
     private final Type type;
@@ -18,6 +19,20 @@ public class PayloadObject {
         out.write(header.getBytes(StandardCharsets.UTF_8));
         out.write(content);
         out.write('\n');
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        } else if (o == null) {
+            return false;
+        } else if (!(o instanceof PayloadObject)) {
+            return false;
+        } else {
+            PayloadObject other = (PayloadObject) o;
+            return this.type.equals(other.type) && Arrays.equals(this.content, other.content);
+        }
     }
 
     public static class Type {
@@ -114,6 +129,20 @@ public class PayloadObject {
                 return String.format("%d.%d.%d.%d:", octet[0], octet[1], octet[2], octet[3]);
             } else {
                 return String.format(":%d", number);
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            } else if (o == null) {
+                return false;
+            } else if (!(o instanceof Type)) {
+                return false;
+            } else {
+                Type other = (Type) o;
+                return this.number == other.number && Arrays.equals(this.octet, other.octet);
             }
         }
     }
