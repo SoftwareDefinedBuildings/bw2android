@@ -4,20 +4,26 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class BosswaveClientTest {
 
     private static final int BW_PORT = 28589;
-    private static final String[] expectedMessages = new String[] {
-            "Hello, World!",
-            "Bosswave 2",
-            "Lorem Ipsum"
-    };
+    private static final Set<String> expectedMessages = new HashSet<>();
+    static {
+        expectedMessages.add("Hello, World!");
+        expectedMessages.add("Bosswave 2");
+        expectedMessages.add("Lorem ipsum");
+        expectedMessages.add("dolor sit amet");
+    }
 
     private final Semaphore sem = new Semaphore(0);
     private final BosswaveClient client = new BosswaveClient("localhost", BW_PORT);
@@ -28,6 +34,7 @@ public class BosswaveClientTest {
     public void setUp() throws IOException {
         // We assume a local Bosswave router is running
         client.connect();
+        client.setEntityFile(new File("/home/jack/bosswave/jack.key"), responseHandler);
 
         SubscribeRequest.Builder builder = new SubscribeRequest.Builder("castle.bw2.io/foo/bar").setExpiryDelta(3600000);
         builder.setPrimaryAccessChain("lGhzBEz_uyAz2sOjJ9kmfyJEl1MakBZP3mKC-DNCNYE=");
@@ -51,12 +58,14 @@ public class BosswaveClientTest {
 
     @Test
     public void testPublish() throws IOException, InterruptedException {
-        sem.acquire();
+        sem.acquire(); // Block until the subscribe operation is complete
+
         PublishRequest.Builder builder = new PublishRequest.Builder("castle.bw2.io/foo/bar");
         builder.setPrimaryAccessChain("lGhzBEz_uyAz2sOjJ9kmfyJEl1MakBZP3mKC-DNCNYE=");
+
         for (String msg : expectedMessages) {
             builder.clearPayloadObjects();
-            PayloadObject.Type poType = new PayloadObject.Type(43);
+            PayloadObject.Type poType = new PayloadObject.Type(new byte[]{64, 0, 0, 0}, 4);
             byte[] poContents = msg.getBytes(StandardCharsets.UTF_8);
             PayloadObject po = new PayloadObject(poType, poContents);
             builder.addPayloadObject(po);
@@ -64,15 +73,13 @@ public class BosswaveClientTest {
             PublishRequest request = builder.build();
             client.publish(request, responseHandler);
         }
-        System.err.println("Waiting on semaphore");
-        sem.acquire();
-        System.err.println("Done waiting");
+
+        sem.acquire(); // Wait until all published messages have been received
     }
 
     private static class TestResponseHandler implements ResponseHandler {
         @Override
         public void onResponseReceived(Response result) {
-            System.err.println(result.getStatus());
             if (!result.getStatus().equals("okay")) {
                 throw new RuntimeException("Bosswave operation failed");
             }
@@ -92,11 +99,10 @@ public class BosswaveClientTest {
             assertEquals(message.getPayloadObjects().size(), 1);
             byte[] messageContent = message.getPayloadObjects().get(0).getContent();
             String messageText = new String(messageContent, StandardCharsets.UTF_8);
-            assertEquals(expectedMessages[counter], messageText);
+            assertTrue(expectedMessages.contains(messageText));
             counter++;
-            System.err.println(counter);
 
-            if (counter == expectedMessages.length) {
+            if (counter == expectedMessages.size()) {
                 sem.release();
             }
         }
