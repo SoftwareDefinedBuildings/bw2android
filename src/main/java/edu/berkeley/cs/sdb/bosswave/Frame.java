@@ -181,7 +181,7 @@ class Frame {
             po.writeToStream(out);
         }
 
-        out.write("end".getBytes(StandardCharsets.UTF_8));
+        out.write("end\n".getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

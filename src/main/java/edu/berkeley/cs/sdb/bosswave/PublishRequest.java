@@ -67,11 +67,12 @@ public class PublishRequest {
         return payloadObjects;
     }
 
-    public class Builder {
+    public static class Builder {
         private String uri;
         private boolean persist;
         private Date expiry;
         private Long expiryDelta;
+        private String primaryAccessChain;
         private boolean doVerify;
         private ChainElaborationLevel elabLevel;
         private final List<RoutingObject> routingObjects;
@@ -105,6 +106,16 @@ public class PublishRequest {
             return this;
         }
 
+        public Builder setDoVerify(boolean doVerify) {
+            this.doVerify = doVerify;
+            return this;
+        }
+
+        public Builder setPrimaryAccessChain(String pac) {
+            primaryAccessChain = pac;
+            return this;
+        }
+
         public Builder setChainElaborationLevel(ChainElaborationLevel level) {
             elabLevel = level;
             return this;
@@ -120,7 +131,20 @@ public class PublishRequest {
             return this;
         }
 
-        public void clear() {
+        public PublishRequest build() {
+            return new PublishRequest(uri, persist, expiry, expiryDelta, primaryAccessChain, doVerify,
+                                      elabLevel, routingObjects, payloadObjects);
+        }
+
+        public void clearPayloadObjects() {
+            payloadObjects.clear();
+        }
+
+        public void clearRoutingObjects() {
+            routingObjects.clear();
+        }
+
+        public void clearAll() {
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             routingObjects.clear();

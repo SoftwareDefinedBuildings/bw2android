@@ -21,6 +21,8 @@ public class BosswaveClient implements AutoCloseable {
     private final Object resultHandlersLock = new Object();
 
     private Socket socket;
+    private BufferedInputStream inStream;
+    private BufferedOutputStream outStream;
 
     public BosswaveClient(String hostName, int port) {
         this.hostName = hostName;
@@ -32,12 +34,14 @@ public class BosswaveClient implements AutoCloseable {
 
     public void connect() throws IOException {
         socket = new Socket(hostName, port);
+        inStream = new BufferedInputStream(socket.getInputStream());
+        outStream = new BufferedOutputStream(socket.getOutputStream());
 
         // Check that we receive a well-formed acknowledgment
         try {
-            Frame frame = Frame.readFromStream(socket.getInputStream());
+            Frame frame = Frame.readFromStream(inStream);
             if (frame.getCommand() != Command.HELLO) {
-                socket.close();
+                close();
                 throw new RuntimeException("Received invalid Bosswave ACK");
             }
         } catch (InvalidFrameException e) {
@@ -51,6 +55,8 @@ public class BosswaveClient implements AutoCloseable {
     @Override
     public void close() throws IOException {
         listenerThread.interrupt();
+        inStream.close();
+        outStream.close();
         socket.close();
     }
 
@@ -102,7 +108,8 @@ public class BosswaveClient implements AutoCloseable {
         }
 
         Frame f = builder.build();
-        f.writeToStream(socket.getOutputStream());
+        f.writeToStream(outStream);
+        outStream.flush();
         installResponseHandler(seqNo, handler);
     }
 
@@ -120,7 +127,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Long expiryDelta = request.getExpiryDelta();
         if (expiryDelta != null) {
-            builder.addKVPair("expiryDelta", String.format("%dms", expiryDelta));
+            builder.addKVPair("expirydelta", String.format("%dms", expiryDelta));
         }
 
         String pac = request.getPrimaryAccessChain();
@@ -145,7 +152,9 @@ public class BosswaveClient implements AutoCloseable {
         }
 
         Frame f = builder.build();
-        f.writeToStream(socket.getOutputStream());
+        f.writeToStream(outStream);
+        outStream.flush();
+        System.err.println("Wrote " + f.getCommand().getCode() + " to socket");
         if (rh != null) {
             installResponseHandler(seqNo, rh);
         }
@@ -171,7 +180,7 @@ public class BosswaveClient implements AutoCloseable {
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    Frame frame = Frame.readFromStream(socket.getInputStream());
+                    Frame frame = Frame.readFromStream(inStream);
                     int seqNo = frame.getSeqNo();
 
                     Command command = frame.getCommand();

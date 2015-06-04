@@ -14,6 +14,10 @@ public class PayloadObject {
         this.content = content;
     }
 
+    public byte[] getContent() {
+        return content.clone();
+    }
+
     void writeToStream(OutputStream out) throws IOException {
         String header = String.format("po %s %d\n", type, content.length);
         out.write(header.getBytes(StandardCharsets.UTF_8));

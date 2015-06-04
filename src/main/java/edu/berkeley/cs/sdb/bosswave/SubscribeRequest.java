@@ -60,10 +60,11 @@ public class SubscribeRequest {
         return leavePacked;
     }
 
-    public class Builder {
+    public static class Builder {
         private String uri;
         private Date expiry;
         private Long expiryDelta;
+        private String primaryAccessChain;
         private boolean doVerify;
         private ChainElaborationLevel elabLevel;
         private final List<RoutingObject> routingObjects;
@@ -92,6 +93,16 @@ public class SubscribeRequest {
             return this;
         }
 
+        public Builder setPrimaryAccessChain(String pac) {
+            primaryAccessChain = pac;
+            return this;
+        }
+
+        public Builder setDoVerify(boolean doVerify) {
+            this.doVerify = doVerify;
+            return this;
+        }
+
         public Builder setChainElaborationLevel(ChainElaborationLevel level) {
             elabLevel = level;
             return this;
@@ -105,6 +116,11 @@ public class SubscribeRequest {
         public Builder setLeavePacked(boolean leavePacked) {
             this.leavePacked = leavePacked;
             return this;
+        }
+
+        public SubscribeRequest build() {
+            return new SubscribeRequest(uri, expiry, expiryDelta, primaryAccessChain, doVerify, elabLevel,
+                                        routingObjects, leavePacked);
         }
     }
 }
