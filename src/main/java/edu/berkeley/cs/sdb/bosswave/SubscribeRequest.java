@@ -19,7 +19,7 @@ public class SubscribeRequest {
     private SubscribeRequest(String uri, Date expiry, Long expiryDelta, String primaryAccessChain, boolean doVerify,
                              ChainElaborationLevel cel, List<RoutingObject> ros, boolean leavePacked) {
         this.uri = uri;
-        this.expiry = new Date(expiry.getTime());
+        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;

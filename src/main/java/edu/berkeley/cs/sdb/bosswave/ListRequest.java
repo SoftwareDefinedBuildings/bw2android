@@ -18,7 +18,7 @@ public class ListRequest {
                         List<RoutingObject> ros) {
         this.uri = uri;
         primaryAccessChain = pac;
-        this.expiry = new Date(expiry.getTime());
+        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
         this.expiryDelta = expiryDelta;
         elabLevel = cel;
         routingObjects = Collections.unmodifiableList(ros);
