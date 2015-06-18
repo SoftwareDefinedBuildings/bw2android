@@ -1,9 +1,8 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -63,10 +62,32 @@ public class BosswaveClient implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        listenerThread.interrupt();
         inStream.close();
         outStream.close();
         socket.close();
+    }
+
+    public void setEntityFile(File f, ResponseHandler handler) throws IOException {
+        BufferedInputStream stream = new BufferedInputStream(new FileInputStream(f));
+        byte[] keyFile = new byte[(int) (f.length() - 1)];
+        stream.read(); // Strip the first byte
+        stream.read(keyFile, 0, keyFile.length);
+        stream.close();
+
+        setEntity(keyFile, handler);
+    }
+
+    private void setEntity(byte[] keyFile, ResponseHandler handler) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.SET_ENTITY, seqNo);
+        PayloadObject.Type type = new PayloadObject.Type(new byte[]{1, 0, 1, 2});
+        PayloadObject po = new PayloadObject(type, keyFile);
+        builder.addPayloadObject(po);
+
+        Frame frame = builder.build();
+        frame.writeToStream(outStream);
+        outStream.flush();
+        installResponseHandler(seqNo, handler);
     }
 
     public void publish(PublishRequest request, ResponseHandler handler) throws IOException {
@@ -163,6 +184,7 @@ public class BosswaveClient implements AutoCloseable {
         Frame f = builder.build();
         f.writeToStream(outStream);
         outStream.flush();
+
         if (rh != null) {
             installResponseHandler(seqNo, rh);
         }
@@ -232,8 +254,8 @@ public class BosswaveClient implements AutoCloseable {
     private class BWListener implements Runnable {
         @Override
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
+            try {
+                while (true) {
                     Frame frame = Frame.readFromStream(inStream);
                     int seqNo = frame.getSeqNo();
 
@@ -268,9 +290,12 @@ public class BosswaveClient implements AutoCloseable {
                             if (messageHandler != null) {
                                 String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
                                 String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
-                                boolean unpack;
-                                String unpackStr = new String(frame.getFirstValue("unpack"), StandardCharsets.UTF_8);
-                                unpack = Boolean.parseBoolean(unpackStr);
+
+                                boolean unpack = true;
+                                byte[] unpackBytes = frame.getFirstValue("unpack");
+                                if (unpackBytes != null) {
+                                    unpack = Boolean.parseBoolean(new String(unpackBytes, StandardCharsets.UTF_8));
+                                }
 
                                 Message msg;
                                 if (unpack) {
@@ -295,11 +320,13 @@ public class BosswaveClient implements AutoCloseable {
                         default:
                             // Ignore frames with any other commands
                     }
-                } catch (InvalidFrameException e) {
-                    // Ignore invalid frames
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to read frame", e);
                 }
+            } catch (InvalidFrameException e) {
+                // Ignore invalid frames
+            } catch (SocketException e) {
+                // This should only occur when we are terminating the client and is safe to ignore
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read frame", e);
             }
         }
     }
