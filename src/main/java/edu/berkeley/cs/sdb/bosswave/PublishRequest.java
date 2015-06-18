@@ -22,7 +22,7 @@ public class PublishRequest {
                            List<PayloadObject> pos) {
         this.uri = uri;
         this.persist = persist;
-        this.expiry = expiry;
+        this.expiry = new Date(expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;

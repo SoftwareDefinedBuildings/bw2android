@@ -15,11 +15,11 @@ public class SubscribeRequest {
     private final List<RoutingObject> routingObjects;
     private final boolean leavePacked;
 
-    // Instantiate this class with PublishRequest.Builder
+    // Instantiate this class with SubscribeRequest.Builder
     private SubscribeRequest(String uri, Date expiry, Long expiryDelta, String primaryAccessChain, boolean doVerify,
                              ChainElaborationLevel cel, List<RoutingObject> ros, boolean leavePacked) {
         this.uri = uri;
-        this.expiry = expiry;
+        this.expiry = new Date(expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;

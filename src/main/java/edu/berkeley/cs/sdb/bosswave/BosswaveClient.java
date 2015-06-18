@@ -1,6 +1,8 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -16,9 +18,11 @@ public class BosswaveClient implements AutoCloseable {
     private final Thread listenerThread;
 
     private final Map<Integer, ResponseHandler> responseHandlers;
-    private final Object responseHandlerLock = new Object();
+    private final Object responseHandlerLock;
     private final Map<Integer, MessageHandler> messageHandlers;
-    private final Object resultHandlersLock = new Object();
+    private final Object messageHandlersLock;
+    private final Map<Integer, ListResultHandler> listResultHandlers;
+    private final Object listResultHandlersLock;
 
     private Socket socket;
     private BufferedInputStream inStream;
@@ -28,8 +32,13 @@ public class BosswaveClient implements AutoCloseable {
         this.hostName = hostName;
         this.port = port;
         listenerThread = new Thread(new BWListener());
+
         responseHandlers = new HashMap<>();
+        responseHandlerLock = new Object();
         messageHandlers = new HashMap<>();
+        messageHandlersLock = new Object();
+        listResultHandlers  = new HashMap<>();
+        listResultHandlersLock = new Object();
     }
 
     public void connect() throws IOException {
@@ -154,12 +163,51 @@ public class BosswaveClient implements AutoCloseable {
         Frame f = builder.build();
         f.writeToStream(outStream);
         outStream.flush();
-        System.err.println("Wrote " + f.getCommand().getCode() + " to socket");
         if (rh != null) {
             installResponseHandler(seqNo, rh);
         }
         if (mh != null) {
             installMessageHandler(seqNo, mh);
+        }
+    }
+
+    public void list(ListRequest request, ResponseHandler rh, ListResultHandler lrh) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.LIST, seqNo);
+
+        builder.addKVPair("uri", request.getUri());
+
+        String pac = request.getPrimaryAccessChain();
+        if (pac != null) {
+            builder.addKVPair("primary_access_chain", pac);
+        }
+
+        Date expiry = request.getExpiry();
+        if (expiry != null) {
+            builder.addKVPair("expiry", Rfc3339.format(expiry));
+        }
+        Long expiryDelta = request.getExpiryDelta();
+        if (expiryDelta != null) {
+            builder.addKVPair("expirydelta", String.format("%dms", expiryDelta));
+        }
+
+        ChainElaborationLevel level = request.getElabLevel();
+        if (level != ChainElaborationLevel.UNSPECIFIED) {
+            builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
+        }
+
+        for (RoutingObject ro : request.getRoutingObjects()) {
+            builder.addRoutingObject(ro);
+        }
+
+        Frame f = builder.build();
+        f.writeToStream(outStream);
+        outStream.flush();
+        if (rh != null) {
+            installResponseHandler(seqNo, rh);
+        }
+        if (lrh != null) {
+            installListResponseHandler(seqNo, lrh);
         }
     }
 
@@ -170,8 +218,14 @@ public class BosswaveClient implements AutoCloseable {
     }
 
     private void installMessageHandler(int seqNo, MessageHandler mh) {
-        synchronized (resultHandlersLock) {
+        synchronized (messageHandlersLock) {
             messageHandlers.put(seqNo, mh);
+        }
+    }
+
+    private void installListResponseHandler(int seqNo, ListResultHandler lrh) {
+        synchronized (listResultHandlersLock) {
+            listResultHandlers.put(seqNo, lrh);
         }
     }
 
@@ -203,9 +257,14 @@ public class BosswaveClient implements AutoCloseable {
 
                         case RESULT: {
                             MessageHandler messageHandler;
-                            synchronized (resultHandlersLock) {
+                            synchronized (messageHandlersLock) {
                                 messageHandler = messageHandlers.get(seqNo);
                             }
+                            ListResultHandler listResultHandler;
+                            synchronized (listResultHandlersLock) {
+                                listResultHandler = listResultHandlers.get(seqNo);
+                            }
+
                             if (messageHandler != null) {
                                 String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
                                 String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
@@ -220,6 +279,15 @@ public class BosswaveClient implements AutoCloseable {
                                     msg = new Message(from, uri, null, null);
                                 }
                                 messageHandler.onResultReceived(msg);
+                            } else if (listResultHandler != null) {
+                                String finishedStr = new String(frame.getFirstValue("finished"), StandardCharsets.UTF_8);
+                                boolean finished = Boolean.parseBoolean(finishedStr);
+                                if (finished) {
+                                    listResultHandler.finish();
+                                } else {
+                                    String child = new String(frame.getFirstValue("child"), StandardCharsets.UTF_8);
+                                    listResultHandler.onResult(child);
+                                }
                             }
                             break;
                         }
