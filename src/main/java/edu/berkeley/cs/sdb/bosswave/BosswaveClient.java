@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BosswaveClient implements AutoCloseable {
@@ -172,8 +173,7 @@ public class BosswaveClient implements AutoCloseable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
-        Boolean leavePacked = request.leavePacked();
-        if (!leavePacked) {
+        if (!request.leavePacked()) {
             builder.addKVPair("unpack", "true");
         }
 
@@ -230,6 +230,163 @@ public class BosswaveClient implements AutoCloseable {
         }
         if (lrh != null) {
             installListResponseHandler(seqNo, lrh);
+        }
+    }
+
+    public void query(QueryRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.QUERY, seqNo);
+
+        builder.addKVPair("uri", request.getUri());
+
+        String pac = request.getPrimaryAccessChain();
+        if (pac != null) {
+            builder.addKVPair("primary_access_chain", pac);
+        }
+
+        Date expiry = request.getExpiry();
+        if (expiry != null) {
+            builder.addKVPair("expiry", Rfc3339.format(expiry));
+        }
+        Long expiryDelta = request.getExpiryDelta();
+        if (expiryDelta != null) {
+            builder.addKVPair("expirydelta", String.format("%dms", expiryDelta));
+        }
+
+        ChainElaborationLevel level = request.getElabLevel();
+        if (level != ChainElaborationLevel.UNSPECIFIED) {
+            builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
+        }
+
+        if (!request.leavePacked()) {
+            builder.addKVPair("unpack", "true");
+        }
+
+        for (RoutingObject ro : request.getRoutingObjects()) {
+            builder.addRoutingObject(ro);
+        }
+
+        Frame f = builder.build();
+        f.writeToStream(outStream);
+        outStream.flush();
+        if (rh != null) {
+            installResponseHandler(seqNo, rh);
+        }
+        if (mh != null) {
+            installMessageHandler(seqNo, mh);
+        }
+    }
+
+    public void makeEntity(MakeEntityRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.MAKE_ENTITY, seqNo);
+
+        String contact = request.getContact();
+        if (contact != null) {
+            builder.addKVPair("contact", contact);
+        }
+
+        String comment = request.getComment();
+        if (comment != null) {
+            builder.addKVPair("comment", comment);
+        }
+
+        Date expiry = request.getExpiry();
+        if (expiry != null) {
+            builder.addKVPair("expiry", Rfc3339.format(expiry));
+        }
+
+        Long expiryDelta = request.getExpiryDelta();
+        if (expiryDelta != null) {
+            builder.addKVPair("expirydelta", String.format("%dms", expiryDelta));
+        }
+
+        for (String revoker : request.getRevokers()) {
+            builder.addKVPair("revoker", revoker);
+        }
+
+        builder.addKVPair("omitcreationdate", Boolean.toString(request.omitCreationDate()));
+
+        Frame f = builder.build();
+        f.writeToStream(outStream);
+        outStream.flush();
+        if (rh != null) {
+            installResponseHandler(seqNo, rh);
+        }
+        if (mh != null) {
+            installMessageHandler(seqNo, mh);
+        }
+    }
+
+    public void makeDot(MakeDotRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.MAKE_DOT, seqNo);
+
+        builder.addKVPair("to", request.getTo());
+
+        Integer ttl = request.getTimeToLive();
+        if (ttl != null) {
+            builder.addKVPair("ttl", Integer.toString(ttl));
+        }
+
+        builder.addKVPair("ispermission", Boolean.toString(request.isPermission()));
+
+        Date expiry = request.getExpiry();
+        if (expiry != null) {
+            builder.addKVPair("expiry", Rfc3339.format(expiry));
+        }
+
+        Long expiryDelta = request.getExpiryDelta();
+        if (expiryDelta != null) {
+            builder.addKVPair("expirydelta", String.format("%dms", expiryDelta));
+        }
+
+        String contact = request.getContact();
+        if (contact != null) {
+            builder.addKVPair("contact", contact);
+        }
+
+        String comment = request.getComment();
+        if (comment != null) {
+            builder.addKVPair("comment", comment);
+        }
+
+        for (String revoker : request.getRevokers()) {
+            builder.addKVPair("revoker", revoker);
+        }
+
+        builder.addKVPair("omitcreationdate", Boolean.toString(request.omitCreationDate()));
+
+        String accessPermissions = request.getAccessPermissions();
+        if (accessPermissions != null) {
+            builder.addKVPair("accesspermissions", accessPermissions);
+        }
+
+        String uri = request.getUri();
+        if (uri != null) {
+            builder.addKVPair("uri", uri);
+        }
+    }
+
+    public void makeChain(boolean isPermission, boolean unelaborate, List<String> dots,
+                          ResponseHandler rh, MessageHandler mh) throws IOException {
+        int seqNo = Frame.generateSequenceNumber();
+        Frame.Builder builder = new Frame.Builder(Command.MAKE_CHAIN, seqNo);
+
+        builder.addKVPair("ispermission", Boolean.toString(isPermission));
+        builder.addKVPair("unelaborate", Boolean.toString(unelaborate));
+        for (String dot : dots) {
+            builder.addKVPair("dot", dot);
+        }
+
+        Frame f = builder.build();
+        f.writeToStream(outStream);
+        outStream.flush();
+        if (rh != null) {
+            installResponseHandler(seqNo, rh);
+        }
+        if (mh != null) {
+            installMessageHandler(seqNo, mh);
         }
     }
 
