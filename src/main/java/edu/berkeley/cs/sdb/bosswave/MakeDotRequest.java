@@ -9,7 +9,7 @@ public class MakeDotRequest {
     private final String to;
     private final Integer timeToLive;
     private final boolean isPermission;
-    private final Date expiry;
+    private final Long expiry;
     private final Long expiryDelta;
     private final String contact;
     private final String comment;
@@ -25,7 +25,7 @@ public class MakeDotRequest {
         this.to = to;
         this.timeToLive = timeToLive;
         this.isPermission = isPermission;
-        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
+        this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.contact = contact;
         this.comment = comment;
@@ -48,7 +48,11 @@ public class MakeDotRequest {
     }
 
     public Date getExpiry() {
-        return expiry;
+        if (expiry == null) {
+            return null;
+        } else {
+            return new Date(expiry);
+        }
     }
 
     public Long getExpiryDelta() {

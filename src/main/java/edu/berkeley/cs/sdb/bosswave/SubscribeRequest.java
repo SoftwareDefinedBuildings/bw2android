@@ -7,7 +7,7 @@ import java.util.List;
 
 public class SubscribeRequest {
     private final String uri;
-    private final Date expiry;
+    private final Long expiry;
     private final Long expiryDelta;
     private final boolean doVerify;
     private final String primaryAccessChain;
@@ -19,7 +19,7 @@ public class SubscribeRequest {
     private SubscribeRequest(String uri, Date expiry, Long expiryDelta, String primaryAccessChain, boolean doVerify,
                              ChainElaborationLevel cel, List<RoutingObject> ros, boolean leavePacked) {
         this.uri = uri;
-        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
+        this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;
@@ -29,7 +29,11 @@ public class SubscribeRequest {
     }
 
     public Date getExpiry() {
-        return expiry;
+        if (expiry == null) {
+            return null;
+        } else {
+            return new Date(expiry);
+        }
     }
 
     public Long getExpiryDelta() {

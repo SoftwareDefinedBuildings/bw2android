@@ -8,7 +8,7 @@ import java.util.List;
 public class PublishRequest {
     private final String uri;
     private final boolean persist;
-    private final Date expiry;
+    private final Long expiry;
     private final Long expiryDelta;
     private final boolean doVerify;
     private final String primaryAccessChain;
@@ -22,7 +22,7 @@ public class PublishRequest {
                            List<PayloadObject> pos) {
         this.uri = uri;
         this.persist = persist;
-        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
+        this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;
@@ -36,7 +36,11 @@ public class PublishRequest {
     }
 
     public Date getExpiry() {
-        return expiry;
+        if (expiry == null) {
+            return null;
+        } else {
+            return new Date(expiry);
+        }
     }
 
     public Long getExpiryDelta() {

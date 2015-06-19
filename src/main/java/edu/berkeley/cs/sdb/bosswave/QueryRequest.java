@@ -8,7 +8,7 @@ import java.util.List;
 public class QueryRequest {
     private final String uri;
     private final String primaryAccessChain;
-    private final Date expiry;
+    private final Long expiry;
     private final Long expiryDelta;
     private final ChainElaborationLevel elabLevel;
     private final boolean leavePacked;
@@ -19,7 +19,7 @@ public class QueryRequest {
                          boolean leavePacked, List<RoutingObject> ros) {
         this.uri = uri;
         primaryAccessChain = pac;
-        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
+        this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         elabLevel = cel;
         this.leavePacked = leavePacked;
@@ -35,7 +35,11 @@ public class QueryRequest {
     }
 
     public Date getExpiry() {
-        return expiry;
+        if (expiry == null) {
+            return null;
+        } else {
+            return new Date(expiry);
+        }
     }
 
     public Long getExpiryDelta() {

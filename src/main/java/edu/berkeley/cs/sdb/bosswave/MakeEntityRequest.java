@@ -8,7 +8,7 @@ import java.util.List;
 public class MakeEntityRequest {
     private final String contact;
     private final String comment;
-    private final Date expiry;
+    private final Long expiry;
     private final Long expiryDelta;
     private final List<String> revokers;
     private final boolean omitCreationDate;
@@ -18,7 +18,7 @@ public class MakeEntityRequest {
                               boolean ocd) {
         this.contact = contact;
         this.comment = comment;
-        this.expiry = (expiry == null ? null : new Date(expiry.getTime()));
+        this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.revokers = Collections.unmodifiableList(revokers);
         omitCreationDate = ocd;
@@ -33,7 +33,11 @@ public class MakeEntityRequest {
     }
 
     public Date getExpiry() {
-        return expiry;
+        if (expiry == null) {
+            return null;
+        } else {
+            return new Date(expiry);
+        }
     }
 
     public Long getExpiryDelta() {
