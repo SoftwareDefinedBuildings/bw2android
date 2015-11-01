@@ -11,16 +11,18 @@ public class ListRequest {
     private final Long expiry;
     private final Long expiryDelta;
     private final ChainElaborationLevel elabLevel;
+    private final boolean autoChain;
     private final List<RoutingObject> routingObjects;
 
     // Instantiate this class with ListRequest.Builder
     private ListRequest(String uri, String pac, Date expiry, Long expiryDelta, ChainElaborationLevel cel,
-                        List<RoutingObject> ros) {
+                        boolean autoChain, List<RoutingObject> ros) {
         this.uri = uri;
         primaryAccessChain = pac;
         this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         elabLevel = cel;
+        this.autoChain = autoChain;
         routingObjects = Collections.unmodifiableList(ros);
     }
 
@@ -48,6 +50,10 @@ public class ListRequest {
         return elabLevel;
     }
 
+    public boolean autoChain() {
+        return autoChain;
+    }
+
     public List<RoutingObject> getRoutingObjects() {
         return routingObjects;
     }
@@ -58,11 +64,13 @@ public class ListRequest {
         private Date expiry;
         private Long expiryDelta;
         private ChainElaborationLevel elabLevel;
+        private boolean autoChain;
         private List<RoutingObject> routingObjects;
 
         public Builder(String uri) {
             this.uri = uri;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
             routingObjects = new ArrayList<>();
         }
 
@@ -91,13 +99,18 @@ public class ListRequest {
             return this;
         }
 
+        public Builder setAutoChain(boolean autoChain) {
+            this.autoChain = autoChain;
+            return this;
+        }
+
         public Builder addRoutingObject(RoutingObject ro) {
             routingObjects.add(ro);
             return this;
         }
 
         public ListRequest build() {
-            return new ListRequest(uri, primaryAccessChain, expiry, expiryDelta, elabLevel, routingObjects);
+            return new ListRequest(uri, primaryAccessChain, expiry, expiryDelta, elabLevel, autoChain, routingObjects);
         }
     }
 }

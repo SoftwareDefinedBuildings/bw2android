@@ -131,6 +131,10 @@ public class BosswaveClient implements AutoCloseable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
+        if (request.autoChain()) {
+            builder.addKVPair("autochain", "true");
+        }
+
         for (RoutingObject ro : request.getRoutingObjects()) {
             builder.addRoutingObject(ro);
         }
@@ -171,6 +175,10 @@ public class BosswaveClient implements AutoCloseable {
         ChainElaborationLevel level = request.getChainElaborationLevel();
         if (level != ChainElaborationLevel.UNSPECIFIED) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
+        }
+
+        if (request.autoChain()) {
+            builder.addKVPair("autochain", "true");
         }
 
         if (!request.leavePacked()) {
@@ -218,6 +226,10 @@ public class BosswaveClient implements AutoCloseable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
+        if (request.autoChain()) {
+            builder.addKVPair("autochain", "true");
+        }
+
         for (RoutingObject ro : request.getRoutingObjects()) {
             builder.addRoutingObject(ro);
         }
@@ -256,6 +268,10 @@ public class BosswaveClient implements AutoCloseable {
         ChainElaborationLevel level = request.getElabLevel();
         if (level != ChainElaborationLevel.UNSPECIFIED) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
+        }
+
+        if (request.autoChain()) {
+            builder.addKVPair("autochain", "true");
         }
 
         if (!request.leavePacked()) {

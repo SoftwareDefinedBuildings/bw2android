@@ -13,12 +13,13 @@ public class PublishRequest {
     private final boolean doVerify;
     private final String primaryAccessChain;
     private final ChainElaborationLevel elabLevel;
+    private final boolean autoChain;
     private final List<RoutingObject> routingObjects;
     private final List<PayloadObject> payloadObjects;
 
     // Instantiate this class with PublishRequest.Builder
     private PublishRequest(String uri, boolean persist, Date expiry, Long expiryDelta, String primaryAccessChain,
-                           boolean doVerify, ChainElaborationLevel cel, List<RoutingObject> ros,
+                           boolean doVerify, ChainElaborationLevel cel, boolean autoChain, List<RoutingObject> ros,
                            List<PayloadObject> pos) {
         this.uri = uri;
         this.persist = persist;
@@ -27,6 +28,7 @@ public class PublishRequest {
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;
         elabLevel = cel;
+        this.autoChain = autoChain;
         routingObjects = Collections.unmodifiableList(ros);
         payloadObjects = Collections.unmodifiableList(pos);
     }
@@ -63,6 +65,10 @@ public class PublishRequest {
         return elabLevel;
     }
 
+    public boolean autoChain() {
+        return autoChain;
+    }
+
     public List<RoutingObject> getRoutingObjects() {
         return routingObjects;
     }
@@ -79,6 +85,7 @@ public class PublishRequest {
         private String primaryAccessChain;
         private boolean doVerify;
         private ChainElaborationLevel elabLevel;
+        private boolean autoChain;
         private final List<RoutingObject> routingObjects;
         private final List<PayloadObject> payloadObjects;
 
@@ -86,6 +93,7 @@ public class PublishRequest {
             this.uri = uri;
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
             routingObjects = new ArrayList<>();
             payloadObjects = new ArrayList<>();
         }
@@ -125,6 +133,11 @@ public class PublishRequest {
             return this;
         }
 
+        public Builder setAutoChain(boolean autoChain) {
+            this.autoChain = autoChain;
+            return this;
+        }
+
         public Builder addRoutingObject(RoutingObject ro) {
             routingObjects.add(ro);
             return this;
@@ -137,7 +150,7 @@ public class PublishRequest {
 
         public PublishRequest build() {
             return new PublishRequest(uri, persist, expiry, expiryDelta, primaryAccessChain, doVerify,
-                                      elabLevel, routingObjects, payloadObjects);
+                                      elabLevel, autoChain, routingObjects, payloadObjects);
         }
 
         public void clearPayloadObjects() {
@@ -151,6 +164,7 @@ public class PublishRequest {
         public void clearAll() {
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
             routingObjects.clear();
             payloadObjects.clear();
         }

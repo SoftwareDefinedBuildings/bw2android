@@ -12,18 +12,21 @@ public class SubscribeRequest {
     private final boolean doVerify;
     private final String primaryAccessChain;
     private final ChainElaborationLevel elabLevel;
+    private final boolean autoChain;
     private final List<RoutingObject> routingObjects;
     private final boolean leavePacked;
 
     // Instantiate this class with SubscribeRequest.Builder
     private SubscribeRequest(String uri, Date expiry, Long expiryDelta, String primaryAccessChain, boolean doVerify,
-                             ChainElaborationLevel cel, List<RoutingObject> ros, boolean leavePacked) {
+                             ChainElaborationLevel cel, List<RoutingObject> ros, boolean autoChain,
+                             boolean leavePacked) {
         this.uri = uri;
         this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         this.primaryAccessChain = primaryAccessChain;
         this.doVerify = doVerify;
         elabLevel = cel;
+        this.autoChain = autoChain;
         this.leavePacked = leavePacked;
         routingObjects = Collections.unmodifiableList(ros);
     }
@@ -56,6 +59,10 @@ public class SubscribeRequest {
         return elabLevel;
     }
 
+    public boolean autoChain() {
+        return autoChain;
+    }
+
     public List<RoutingObject> getRoutingObjects() {
         return routingObjects;
     }
@@ -71,6 +78,7 @@ public class SubscribeRequest {
         private String primaryAccessChain;
         private boolean doVerify;
         private ChainElaborationLevel elabLevel;
+        private boolean autoChain;
         private final List<RoutingObject> routingObjects;
         private boolean leavePacked;
 
@@ -78,6 +86,7 @@ public class SubscribeRequest {
             this.uri = uri;
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
             routingObjects = new ArrayList<>();
             leavePacked = false;
         }
@@ -112,6 +121,11 @@ public class SubscribeRequest {
             return this;
         }
 
+        public Builder setAutoChain(boolean autoChain) {
+            this.autoChain = autoChain;
+            return this;
+        }
+
         public Builder addRoutingObject(RoutingObject ro) {
             routingObjects.add(ro);
             return this;
@@ -124,7 +138,7 @@ public class SubscribeRequest {
 
         public SubscribeRequest build() {
             return new SubscribeRequest(uri, expiry, expiryDelta, primaryAccessChain, doVerify, elabLevel,
-                                        routingObjects, leavePacked);
+                                        routingObjects, autoChain, leavePacked);
         }
     }
 }

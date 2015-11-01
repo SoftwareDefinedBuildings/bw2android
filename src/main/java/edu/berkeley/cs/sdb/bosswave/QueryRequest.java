@@ -11,17 +11,19 @@ public class QueryRequest {
     private final Long expiry;
     private final Long expiryDelta;
     private final ChainElaborationLevel elabLevel;
+    private final boolean autoChain;
     private final boolean leavePacked;
     private final List<RoutingObject> routingObjects;
 
     // Instantiate this class with QueryRequest.Builder
     private QueryRequest(String uri, String pac, Date expiry, Long expiryDelta, ChainElaborationLevel cel,
-                         boolean leavePacked, List<RoutingObject> ros) {
+                         boolean autoChain, boolean leavePacked, List<RoutingObject> ros) {
         this.uri = uri;
         primaryAccessChain = pac;
         this.expiry = (expiry == null ? null : expiry.getTime());
         this.expiryDelta = expiryDelta;
         elabLevel = cel;
+        this.autoChain = autoChain;
         this.leavePacked = leavePacked;
         routingObjects = Collections.unmodifiableList(ros);
     }
@@ -50,6 +52,10 @@ public class QueryRequest {
         return elabLevel;
     }
 
+    public boolean autoChain() {
+        return autoChain;
+    }
+
     public boolean leavePacked() {
         return leavePacked;
     }
@@ -64,12 +70,14 @@ public class QueryRequest {
         private Date expiry;
         private Long expiryDelta;
         private ChainElaborationLevel elabLevel;
+        private boolean autoChain;
         private boolean leavePacked;
         private List<RoutingObject> routingObjects;
 
         public Builder(String uri) {
             this.uri = uri;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
             leavePacked = false;
             routingObjects = new ArrayList<>();
         }
@@ -99,6 +107,11 @@ public class QueryRequest {
             return this;
         }
 
+        public Builder setAutoChain(boolean autoChain) {
+            this.autoChain = autoChain;
+            return this;
+        }
+
         public Builder setLeavePacked(boolean leavePacked) {
             this.leavePacked = leavePacked;
             return this;
@@ -111,7 +124,7 @@ public class QueryRequest {
 
         public QueryRequest build() {
             return new QueryRequest(uri, primaryAccessChain, expiry, expiryDelta, elabLevel, leavePacked,
-                                    routingObjects);
+                                    autoChain, routingObjects);
         }
     }
 }

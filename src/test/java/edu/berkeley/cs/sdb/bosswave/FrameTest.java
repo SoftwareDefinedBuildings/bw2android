@@ -25,14 +25,14 @@ public class FrameTest {
 
     @Test(expected = InvalidFrameException.class)
     public void testInvalidHeader() throws IOException {
-        byte[] frameContent = "helo 00000000000 0000000410 foobar\nend".getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = "helo 00000000000 0000000410 foobar\nend\n".getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame.readFromStream(in);
     }
 
     @Test
     public void testReadEmptyFrame() throws IOException {
-        byte[] frameContent = "helo 0000000000 0000000410\nend".getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = "helo 0000000000 0000000410\nend\n".getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
 
@@ -52,7 +52,7 @@ public class FrameTest {
                 "testValue2\n" +
                 "kv testKey 6\n" +
                 "foobar\n" +
-                "end";
+                "end\n";
         byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
@@ -71,7 +71,7 @@ public class FrameTest {
         String frameStr = "publ 0000000059 0000000410\n" +
                 "po 1.2.3.4:25 11\n" +
                 "testPayload\n" +
-                "end";
+                "end\n";
         byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
@@ -93,7 +93,7 @@ public class FrameTest {
         String frameStr = "pers 0000000046 0000000410\n" +
                 "ro 255 6\n" +
                 "testRO\n" +
-                "end";
+                "end\n";
         byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
@@ -116,7 +116,7 @@ public class FrameTest {
         frame.writeToStream(out);
 
         String actualFrameContents = out.toString(StandardCharsets.UTF_8.name());
-        String expectedFrameContents = "subs 0000000000 0000001840\nend";
+        String expectedFrameContents = "subs 0000000000 0000001840\nend\n";
         assertEquals(expectedFrameContents, actualFrameContents);
     }
 
@@ -136,7 +136,7 @@ public class FrameTest {
                 "testValue1\n" +
                 "kv testKey2 10\n" +
                 "testValue2\n" +
-                "end";
+                "end\n";
         assertEquals(expectedFrameStr, frameStr);
     }
 
@@ -155,7 +155,7 @@ public class FrameTest {
         String expectedFrameStr = "subs 0000000000 0000001840\n" +
                 "po :42 11\n" +
                 "testPayload\n" +
-                "end";
+                "end\n";
         assertEquals(expectedFrameStr, frameStr);
     }
 
@@ -173,7 +173,7 @@ public class FrameTest {
         String expectedFrameStr = "publ 0000000000 0000001234\n" +
                 "ro 99 6\n" +
                 "testRO\n" +
-                "end";
+                "end\n";
         assertEquals(expectedFrameStr, frameStr);
     }
 }
