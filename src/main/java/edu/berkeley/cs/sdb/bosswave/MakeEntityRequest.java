@@ -61,6 +61,7 @@ public class MakeEntityRequest {
         private boolean omitCreationDate;
 
         public Builder() {
+            omitCreationDate = false;
             revokers = new ArrayList<>();
         }
 
@@ -94,7 +95,16 @@ public class MakeEntityRequest {
             return this;
         }
 
+        public MakeEntityRequest build() {
+            return new MakeEntityRequest(contact, comment, expiry, expiryDelta, revokers, omitCreationDate);
+        }
+
         public void clearRevokers() {
+            revokers.clear();
+        }
+
+        public void clearAll() {
+            omitCreationDate = false;
             revokers.clear();
         }
     }

@@ -112,5 +112,15 @@ public class ListRequest {
         public ListRequest build() {
             return new ListRequest(uri, primaryAccessChain, expiry, expiryDelta, elabLevel, autoChain, routingObjects);
         }
+        
+        public void clearRoutingObjects() {
+            routingObjects.clear();
+        }
+
+        public void clearAll() {
+            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
+            routingObjects.clear();
+        }
     }
 }

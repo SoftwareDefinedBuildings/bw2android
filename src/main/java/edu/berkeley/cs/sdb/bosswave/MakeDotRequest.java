@@ -158,6 +158,11 @@ public class MakeDotRequest {
             revokers.clear();
         }
 
+        public void clearAll() {
+            isPermission = false;
+            revokers.clear();
+        }
+
         public MakeDotRequest build() {
             return new MakeDotRequest(to, timeToLive, isPermission, expiry, expiryDelta, contact, comment, revokers,
                                       omitCreationDate, accessPermissions, uri);

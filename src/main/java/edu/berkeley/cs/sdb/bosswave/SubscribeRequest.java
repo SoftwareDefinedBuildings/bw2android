@@ -140,5 +140,17 @@ public class SubscribeRequest {
             return new SubscribeRequest(uri, expiry, expiryDelta, primaryAccessChain, doVerify, elabLevel,
                                         routingObjects, autoChain, leavePacked);
         }
+
+        public void clearRoutingObjects() {
+            routingObjects.clear();
+        }
+
+        public void clearAll() {
+            doVerify = false;
+            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
+            leavePacked = false;
+            routingObjects.clear();
+        }
     }
 }

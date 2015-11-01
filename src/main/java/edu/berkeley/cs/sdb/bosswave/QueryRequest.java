@@ -126,5 +126,16 @@ public class QueryRequest {
             return new QueryRequest(uri, primaryAccessChain, expiry, expiryDelta, elabLevel, leavePacked,
                                     autoChain, routingObjects);
         }
+
+        public void clearRoutingObjects() {
+            routingObjects.clear();
+        }
+
+        public void clearAll() {
+            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            autoChain = false;
+            leavePacked = false;
+            routingObjects.clear();
+        }
     }
 }
