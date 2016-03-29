@@ -1,12 +1,13 @@
 package edu.berkeley.cs.sdb.bosswave;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 public class BosswaveClientTest {
 
     private static final int BW_PORT = 28589;
-    private static final Set<String> expectedMessages = new HashSet<>();
+    private static final Set<String> expectedMessages = new HashSet<String>();
     static {
         expectedMessages.add("Hello, World!");
         expectedMessages.add("Bosswave 2");
@@ -66,7 +67,7 @@ public class BosswaveClientTest {
         for (String msg : expectedMessages) {
             builder.clearPayloadObjects();
             PayloadObject.Type poType = new PayloadObject.Type(new byte[]{64, 0, 0, 0});
-            byte[] poContents = msg.getBytes(StandardCharsets.UTF_8);
+            byte[] poContents = msg.getBytes(CharEncoding.UTF_8);
             PayloadObject po = new PayloadObject(poType, poContents);
             builder.addPayloadObject(po);
 
@@ -98,7 +99,12 @@ public class BosswaveClientTest {
         public void onResultReceived(Message message) {
             assertEquals(message.getPayloadObjects().size(), 1);
             byte[] messageContent = message.getPayloadObjects().get(0).getContent();
-            String messageText = new String(messageContent, StandardCharsets.UTF_8);
+            String messageText;
+            try {
+                messageText = new String(messageContent, CharEncoding.UTF_8);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Platforom doesn't support UTF-8", e);
+            }
             assertTrue(expectedMessages.contains(messageText));
             counter++;
 

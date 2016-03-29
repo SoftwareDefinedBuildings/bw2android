@@ -40,7 +40,7 @@ enum Command {
 
     private static final Map<String, Command> COMMANDS_BY_CODE;
     static {
-        HashMap<String, Command> codeMap = new HashMap<>();
+        HashMap<String, Command> codeMap = new HashMap<String, Command>();
         for (Command bwc : Command.values()) {
             codeMap.put(bwc.getCode(), bwc);
         }

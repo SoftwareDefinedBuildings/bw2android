@@ -87,7 +87,7 @@ public class SubscribeRequest {
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             autoChain = false;
-            routingObjects = new ArrayList<>();
+            routingObjects = new ArrayList<RoutingObject>();
             leavePacked = false;
         }
 

@@ -1,7 +1,11 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import org.apache.commons.lang3.CharEncoding;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,7 +63,7 @@ class Frame {
     public static Frame readFromStream(InputStream stream) throws IOException {
         byte[] frameBytes = new byte[BW_HEADER_LEN];
         stream.read(frameBytes, 0, BW_HEADER_LEN);
-        String frameHeader = new String(frameBytes, StandardCharsets.UTF_8);
+        String frameHeader = new String(frameBytes, CharEncoding.UTF_8);
 
         String[] headerTokens = frameHeader.trim().split(" ");
         if (headerTokens.length != 3) {
@@ -89,9 +93,9 @@ class Frame {
             throw new InvalidFrameException("Invalid sequence number in frame header: " + headerTokens[2], e);
         }
 
-        List<KVPair> kvPairs = new ArrayList<>();
-        List<RoutingObject> routingObjects = new ArrayList<>();
-        List<PayloadObject> payloadObjects = new ArrayList<>();
+        List<KVPair> kvPairs = new ArrayList<KVPair>();
+        List<RoutingObject> routingObjects = new ArrayList<RoutingObject>();
+        List<PayloadObject> payloadObjects = new ArrayList<PayloadObject>();
         String currentLine;
         while (!(currentLine = readLineFromStream(stream)).equals("end")) {
             String[] tokens = currentLine.split(" ");
@@ -109,59 +113,47 @@ class Frame {
                 throw new InvalidFrameException("Invalid length in item header: " + currentLine, e);
             }
 
-            switch (tokens[0]) {
-                case "kv": {
-                    String key = tokens[1];
-                    byte[] body = new byte[length];
-                    stream.read(body, 0, length);
-                    kvPairs.add(new KVPair(key, body));
+            if (tokens[0].equals("kv")) {
+                String key = tokens[1];
+                byte[] body = new byte[length];
+                stream.read(body, 0, length);
+                kvPairs.add(new KVPair(key, body));
 
-                    // Remove trailing '\n'
-                    stream.read();
-                    break;
-                }
-
-                case "ro": {
-                    int routingObjNum;
-                    try {
-                        routingObjNum = Integer.parseInt(tokens[1]);
-                        if (routingObjNum < 0 || routingObjNum > 255) {
-                            throw new InvalidFrameException("Invalid routing object number: " + currentLine);
-                        }
-                    } catch (NumberFormatException e) {
-                        throw new InvalidFrameException("Invalid routing object number: " + tokens[1], e);
+                // Remove trailing '\n'
+                stream.read();
+            } else if (tokens[0].equals("ro")) {
+                int routingObjNum;
+                try {
+                    routingObjNum = Integer.parseInt(tokens[1]);
+                    if (routingObjNum < 0 || routingObjNum > 255) {
+                        throw new InvalidFrameException("Invalid routing object number: " + currentLine);
                     }
-                    byte[] body = new byte[length];
-                    stream.read(body, 0, length);
-                    RoutingObject ro = new RoutingObject(routingObjNum, body);
-                    routingObjects.add(ro);
+                } catch (NumberFormatException e) {
+                    throw new InvalidFrameException("Invalid routing object number: " + tokens[1], e);
+                }
+                byte[] body = new byte[length];
+                stream.read(body, 0, length);
+                RoutingObject ro = new RoutingObject(routingObjNum, body);
+                routingObjects.add(ro);
 
-                    // Remove trailing '\n'
-                    stream.read();
-                    break;
+                // Remove trailing '\n'
+                stream.read();
+            } else if (tokens[0].equals("po")) {
+                PayloadObject.Type type;
+                try {
+                    type = PayloadObject.Type.fromString(tokens[1]);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidFrameException("Invalid payload object type: " + currentLine, e);
                 }
 
-                case "po": {
-                    PayloadObject.Type type;
-                    try {
-                        type = PayloadObject.Type.fromString(tokens[1]);
-                    } catch (IllegalArgumentException e) {
-                        throw new InvalidFrameException("Invalid payload object type: " + currentLine, e);
-                    }
+                byte[] body = new byte[length];
+                stream.read(body, 0, length);
+                payloadObjects.add(new PayloadObject(type, body));
 
-                    byte[] body = new byte[length];
-                    stream.read(body, 0, length);
-                    payloadObjects.add(new PayloadObject(type, body));
-
-                    // Remove trailing '\n'
-                    stream.read();
-                    break;
-                }
-
-                default: {
-                    throw new InvalidFrameException("Invalid item header: " + currentLine);
-                }
-
+                // Remove trailing '\n'
+                stream.read();
+            } else {
+                throw new InvalidFrameException("Invalid item header: " + currentLine);
             }
         }
 
@@ -169,7 +161,7 @@ class Frame {
     }
 
     public void writeToStream(OutputStream out) throws IOException {
-        out.write(String.format("%s 0000000000 %010d\n", command.getCode(), seqNo).getBytes(StandardCharsets.UTF_8));
+        out.write(String.format("%s 0000000000 %010d\n", command.getCode(), seqNo).getBytes(CharEncoding.UTF_8));
 
         for (KVPair pair : kvPairs) {
             pair.writeToStream(out);
@@ -181,7 +173,7 @@ class Frame {
             po.writeToStream(out);
         }
 
-        out.write("end\n".getBytes(StandardCharsets.UTF_8));
+        out.write("end\n".getBytes(CharEncoding.UTF_8));
     }
 
     @Override
@@ -203,7 +195,7 @@ class Frame {
     }
 
     private static byte[] readUntil(InputStream in, byte end) throws IOException {
-        List<Byte> bytes = new ArrayList<>();
+        List<Byte> bytes = new ArrayList<Byte>();
         int b = in.read();
         while (b != -1 && (byte)b != end) {
             bytes.add((byte)b);
@@ -223,7 +215,7 @@ class Frame {
     // Returned string does not contain the terminating newline
     private static String readLineFromStream(InputStream stream) throws IOException {
         byte[] bytes = readUntil(stream, (byte)'\n');
-        String line = new String(bytes, StandardCharsets.UTF_8);
+        String line = new String(bytes, CharEncoding.UTF_8);
         if (line.endsWith("\n")) {
             return line.substring(0, line.length() - 1);
         } else {
@@ -245,9 +237,9 @@ class Frame {
         public Builder(Command command, int seqNo) {
             this.command = command;
             this.seqNo = seqNo;
-            kvPairs = new ArrayList<>();
-            routingObjects = new ArrayList<>();
-            payloadObjects = new ArrayList<>();
+            kvPairs = new ArrayList<KVPair>();
+            routingObjects = new ArrayList<RoutingObject>();
+            payloadObjects = new ArrayList<PayloadObject>();
         }
 
         public Builder setCommand(Command command) {
@@ -271,7 +263,11 @@ class Frame {
         }
 
         public Builder addKVPair(String key, String value) {
-            addKVPair(key, value.getBytes(StandardCharsets.UTF_8));
+            try {
+                addKVPair(key, value.getBytes(CharEncoding.UTF_8));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Platform doesn't support UTF-8", e);
+            }
             return this;
         }
 

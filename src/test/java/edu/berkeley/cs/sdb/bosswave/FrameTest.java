@@ -1,11 +1,12 @@
 package edu.berkeley.cs.sdb.bosswave;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -13,26 +14,26 @@ import static org.junit.Assert.assertTrue;
 public class FrameTest {
 
     @Test
-    public void testGetFirstValue() {
+    public void testGetFirstValue() throws UnsupportedEncodingException {
         Frame.Builder builder = new Frame.Builder(Command.PUBLISH, 410);
         builder.addKVPair("testKey", "testValue1");
         builder.addKVPair("testKey", "testValue2"); // Redundant key/value pair
 
         Frame frame = builder.build();
-        String firstValue = new String(frame.getFirstValue("testKey"), StandardCharsets.UTF_8);
+        String firstValue = new String(frame.getFirstValue("testKey"), CharEncoding.UTF_8);
         assertEquals("testValue1", firstValue);
     }
 
     @Test(expected = InvalidFrameException.class)
     public void testInvalidHeader() throws IOException {
-        byte[] frameContent = "helo 00000000000 0000000410 foobar\nend\n".getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = "helo 00000000000 0000000410 foobar\nend\n".getBytes(CharEncoding.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame.readFromStream(in);
     }
 
     @Test
     public void testReadEmptyFrame() throws IOException {
-        byte[] frameContent = "helo 0000000000 0000000410\nend\n".getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = "helo 0000000000 0000000410\nend\n".getBytes(CharEncoding.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
 
@@ -53,15 +54,15 @@ public class FrameTest {
                 "kv testKey 6\n" +
                 "foobar\n" +
                 "end\n";
-        byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = frameStr.getBytes(CharEncoding.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
 
         assertEquals(Command.PUBLISH, frame.getCommand());
         assertEquals(410, frame.getSeqNo());
         assertEquals(3, frame.getKVPairs().size());
-        assertEquals("testValue", new String(frame.getFirstValue("testKey"), StandardCharsets.UTF_8));
-        assertEquals("testValue2", new String(frame.getFirstValue("testKey2"), StandardCharsets.UTF_8));
+        assertEquals("testValue", new String(frame.getFirstValue("testKey"), CharEncoding.UTF_8));
+        assertEquals("testValue2", new String(frame.getFirstValue("testKey2"), CharEncoding.UTF_8));
         assertTrue(frame.getRoutingObjects().isEmpty());
         assertTrue(frame.getPayloadObjects().isEmpty());
     }
@@ -72,7 +73,7 @@ public class FrameTest {
                 "po 1.2.3.4: 11\n" +
                 "testPayload\n" +
                 "end\n";
-        byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = frameStr.getBytes(CharEncoding.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
 
@@ -83,7 +84,7 @@ public class FrameTest {
         assertEquals(frame.getPayloadObjects().size(), 1);
 
         PayloadObject.Type expectedType = new PayloadObject.Type(new byte[]{1, 2, 3, 4});
-        byte[] expectedContents = "testPayload".getBytes(StandardCharsets.UTF_8);
+        byte[] expectedContents = "testPayload".getBytes(CharEncoding.UTF_8);
         PayloadObject expectedPayload = new PayloadObject(expectedType, expectedContents);
         assertEquals(expectedPayload, frame.getPayloadObjects().get(0));
     }
@@ -94,7 +95,7 @@ public class FrameTest {
                 "ro 255 6\n" +
                 "testRO\n" +
                 "end\n";
-        byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
+        byte[] frameContent = frameStr.getBytes(CharEncoding.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(frameContent);
         Frame frame = Frame.readFromStream(in);
 
@@ -104,7 +105,7 @@ public class FrameTest {
         assertTrue(frame.getPayloadObjects().isEmpty());
         assertEquals(frame.getRoutingObjects().size(), 1);
 
-        RoutingObject expectedRo = new RoutingObject(255, "testRO".getBytes(StandardCharsets.UTF_8));
+        RoutingObject expectedRo = new RoutingObject(255, "testRO".getBytes(CharEncoding.UTF_8));
         assertEquals(expectedRo, frame.getRoutingObjects().get(0));
     }
 
@@ -115,7 +116,7 @@ public class FrameTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         frame.writeToStream(out);
 
-        String actualFrameContents = out.toString(StandardCharsets.UTF_8.name());
+        String actualFrameContents = out.toString(CharEncoding.UTF_8);
         String expectedFrameContents = "subs 0000000000 0000001840\nend\n";
         assertEquals(expectedFrameContents, actualFrameContents);
     }
@@ -129,7 +130,7 @@ public class FrameTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         frame.writeToStream(out);
-        String frameStr = out.toString(StandardCharsets.UTF_8.name());
+        String frameStr = out.toString(CharEncoding.UTF_8);
 
         String expectedFrameStr = "publ 0000000000 0000001600\n" +
                 "kv testKey1 10\n" +
@@ -144,13 +145,13 @@ public class FrameTest {
     public void testWritePoFrame() throws IOException {
         Frame.Builder builder = new Frame.Builder(Command.SUBSCRIBE, 1840);
         PayloadObject.Type type = new PayloadObject.Type(42);
-        PayloadObject po = new PayloadObject(type, "testPayload".getBytes(StandardCharsets.UTF_8));
+        PayloadObject po = new PayloadObject(type, "testPayload".getBytes(CharEncoding.UTF_8));
         builder.addPayloadObject(po);
         Frame frame = builder.build();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         frame.writeToStream(out);
-        String frameStr = out.toString(StandardCharsets.UTF_8.name());
+        String frameStr = out.toString(CharEncoding.UTF_8);
 
         String expectedFrameStr = "subs 0000000000 0000001840\n" +
                 "po :42 11\n" +
@@ -162,13 +163,13 @@ public class FrameTest {
     @Test
     public void testWriteRoFrame() throws IOException {
         Frame.Builder builder = new Frame.Builder(Command.PUBLISH, 1234);
-        RoutingObject ro = new RoutingObject(99, "testRO".getBytes(StandardCharsets.UTF_8));
+        RoutingObject ro = new RoutingObject(99, "testRO".getBytes(CharEncoding.UTF_8));
         builder.addRoutingObject(ro);
         Frame frame = builder.build();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         frame.writeToStream(out);
-        String frameStr = out.toString(StandardCharsets.UTF_8.name());
+        String frameStr = out.toString(CharEncoding.UTF_8);
 
         String expectedFrameStr = "publ 0000000000 0000001234\n" +
                 "ro 99 6\n" +

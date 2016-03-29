@@ -1,17 +1,20 @@
 package edu.berkeley.cs.sdb.bosswave;
 
+import org.apache.commons.lang3.CharEncoding;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BosswaveClient implements AutoCloseable {
-    private static final SimpleDateFormat Rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+public class BosswaveClient implements Closeable {
+    private final DateTimeFormatter Rfc3339 = ISODateTimeFormat.dateTime();
 
     private final String hostName;
     private final int port;
@@ -33,11 +36,11 @@ public class BosswaveClient implements AutoCloseable {
         this.port = port;
         listenerThread = new Thread(new BWListener());
 
-        responseHandlers = new HashMap<>();
+        responseHandlers = new HashMap<Integer, ResponseHandler>();
         responseHandlerLock = new Object();
-        messageHandlers = new HashMap<>();
+        messageHandlers = new HashMap<Integer, MessageHandler>();
         messageHandlersLock = new Object();
-        listResultHandlers  = new HashMap<>();
+        listResultHandlers  = new HashMap<Integer, ListResultHandler>();
         listResultHandlersLock = new Object();
     }
 
@@ -111,7 +114,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiryTime = request.getExpiry();
         if (expiryTime != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiryTime));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiryTime)));
         }
 
         Long expiryDelta = request.getExpiryDelta();
@@ -157,7 +160,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiryTime = request.getExpiry();
         if (expiryTime != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiryTime));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiryTime)));
         }
 
         Long expiryDelta = request.getExpiryDelta();
@@ -214,7 +217,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiry = request.getExpiry();
         if (expiry != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiry));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiry)));
         }
         Long expiryDelta = request.getExpiryDelta();
         if (expiryDelta != null) {
@@ -258,7 +261,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiry = request.getExpiry();
         if (expiry != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiry));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiry)));
         }
         Long expiryDelta = request.getExpiryDelta();
         if (expiryDelta != null) {
@@ -309,7 +312,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiry = request.getExpiry();
         if (expiry != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiry));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiry)));
         }
 
         Long expiryDelta = request.getExpiryDelta();
@@ -349,7 +352,7 @@ public class BosswaveClient implements AutoCloseable {
 
         Date expiry = request.getExpiry();
         if (expiry != null) {
-            builder.addKVPair("expiry", Rfc3339.format(expiry));
+            builder.addKVPair("expiry", Rfc3339.print(new DateTime(expiry)));
         }
 
         Long expiryDelta = request.getExpiryDelta();
@@ -440,10 +443,10 @@ public class BosswaveClient implements AutoCloseable {
                                 responseHandler = responseHandlers.get(seqNo);
                             }
                             if (responseHandler != null) {
-                                String status = new String(frame.getFirstValue("status"), StandardCharsets.UTF_8);
+                                String status = new String(frame.getFirstValue("status"), CharEncoding.UTF_8);
                                 String reason = null;
                                 if (!status.equals("okay")) {
-                                    reason = new String(frame.getFirstValue("reason"), StandardCharsets.UTF_8);
+                                    reason = new String(frame.getFirstValue("reason"), CharEncoding.UTF_8);
                                 }
                                 responseHandler.onResponseReceived(new Response(status, reason));
                             }
@@ -461,13 +464,13 @@ public class BosswaveClient implements AutoCloseable {
                             }
 
                             if (messageHandler != null) {
-                                String uri = new String(frame.getFirstValue("uri"), StandardCharsets.UTF_8);
-                                String from = new String(frame.getFirstValue("from"), StandardCharsets.UTF_8);
+                                String uri = new String(frame.getFirstValue("uri"), CharEncoding.UTF_8);
+                                String from = new String(frame.getFirstValue("from"), CharEncoding.UTF_8);
 
                                 boolean unpack = true;
                                 byte[] unpackBytes = frame.getFirstValue("unpack");
                                 if (unpackBytes != null) {
-                                    unpack = Boolean.parseBoolean(new String(unpackBytes, StandardCharsets.UTF_8));
+                                    unpack = Boolean.parseBoolean(new String(unpackBytes, CharEncoding.UTF_8));
                                 }
 
                                 Message msg;
@@ -478,12 +481,12 @@ public class BosswaveClient implements AutoCloseable {
                                 }
                                 messageHandler.onResultReceived(msg);
                             } else if (listResultHandler != null) {
-                                String finishedStr = new String(frame.getFirstValue("finished"), StandardCharsets.UTF_8);
+                                String finishedStr = new String(frame.getFirstValue("finished"), CharEncoding.UTF_8);
                                 boolean finished = Boolean.parseBoolean(finishedStr);
                                 if (finished) {
                                     listResultHandler.finish();
                                 } else {
-                                    String child = new String(frame.getFirstValue("child"), StandardCharsets.UTF_8);
+                                    String child = new String(frame.getFirstValue("child"), CharEncoding.UTF_8);
                                     listResultHandler.onResult(child);
                                 }
                             }

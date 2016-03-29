@@ -99,7 +99,7 @@ public class MakeDotRequest {
         public Builder(String to) {
             this.to = to;
             isPermission = false;
-            revokers = new ArrayList<>();
+            revokers = new ArrayList<String>();
         }
 
         public Builder setTo(String to) {

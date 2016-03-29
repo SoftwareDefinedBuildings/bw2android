@@ -1,8 +1,9 @@
 package edu.berkeley.cs.sdb.bosswave;
 
+import org.apache.commons.lang3.CharEncoding;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class PayloadObject {
@@ -20,7 +21,7 @@ public class PayloadObject {
 
     void writeToStream(OutputStream out) throws IOException {
         String header = String.format("po %s %d\n", type, content.length);
-        out.write(header.getBytes(StandardCharsets.UTF_8));
+        out.write(header.getBytes(CharEncoding.UTF_8));
         out.write(content);
         out.write('\n');
     }

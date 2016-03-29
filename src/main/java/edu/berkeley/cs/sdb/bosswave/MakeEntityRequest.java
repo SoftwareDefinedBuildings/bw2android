@@ -62,7 +62,7 @@ public class MakeEntityRequest {
 
         public Builder() {
             omitCreationDate = false;
-            revokers = new ArrayList<>();
+            revokers = new ArrayList<String>();
         }
 
         public Builder setContact(String contact) {

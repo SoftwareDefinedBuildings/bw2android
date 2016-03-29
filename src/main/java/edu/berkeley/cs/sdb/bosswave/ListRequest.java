@@ -71,7 +71,7 @@ public class ListRequest {
             this.uri = uri;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             autoChain = false;
-            routingObjects = new ArrayList<>();
+            routingObjects = new ArrayList<RoutingObject>();
         }
 
         public Builder setUri(String uri) {

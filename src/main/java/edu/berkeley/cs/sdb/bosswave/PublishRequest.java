@@ -94,8 +94,8 @@ public class PublishRequest {
             doVerify = false;
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             autoChain = false;
-            routingObjects = new ArrayList<>();
-            payloadObjects = new ArrayList<>();
+            routingObjects = new ArrayList<RoutingObject>();
+            payloadObjects = new ArrayList<PayloadObject>();
         }
 
         public Builder setUri(String uri) {

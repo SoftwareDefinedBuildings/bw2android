@@ -1,0 +1,14 @@
+group 'edu.berkeley.cs.sdb'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+    compile group: 'joda-time', name: 'joda-time', version: '2.9.3'
+}

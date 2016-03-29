@@ -79,7 +79,7 @@ public class QueryRequest {
             elabLevel = ChainElaborationLevel.UNSPECIFIED;
             autoChain = false;
             leavePacked = false;
-            routingObjects = new ArrayList<>();
+            routingObjects = new ArrayList<RoutingObject>();
         }
 
         public Builder setUri(String uri) {
