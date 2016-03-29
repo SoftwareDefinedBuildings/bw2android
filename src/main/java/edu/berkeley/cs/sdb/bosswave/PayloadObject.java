@@ -56,6 +56,9 @@ public class PayloadObject {
         public Type(byte[] octet, int number) {
             this.octet = octet;
             this.number = number;
+            if (!validateBothType(octet, number)) {
+                throw new IllegalArgumentException("Payload type octet and number disagree");
+            }
         }
 
         private static byte[] parseOctet(String str) {
@@ -118,9 +121,6 @@ public class PayloadObject {
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Payload object type contains invalid number", e);
                 }
-                if (number < 0 || number > 99) {
-                    throw new IllegalArgumentException("Payload object type number must contain 1 or 2 digits");
-                }
                 return new Type(octet, number);
             }
         }
@@ -148,6 +148,11 @@ public class PayloadObject {
                 Type other = (Type) o;
                 return this.number == other.number && Arrays.equals(this.octet, other.octet);
             }
+        }
+
+        private static boolean validateBothType(byte[] octet, int number) {
+            int octetValue = (octet[0] << 24) + (octet[1] << 16) + (octet[2] << 8) + octet[3];
+            return octetValue == number;
         }
     }
 }

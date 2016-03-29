@@ -18,7 +18,7 @@ public class RoutingObjectTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ro.writeToStream(out);
 
-        String expectedOutput = "ro 210 17\ntestRoutingObject";
+        String expectedOutput = "ro 210 17\ntestRoutingObject\n";
         String actualOutput = out.toString(StandardCharsets.UTF_8.name());
         assertEquals(expectedOutput, actualOutput);
     }

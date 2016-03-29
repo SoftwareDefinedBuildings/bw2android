@@ -69,7 +69,7 @@ public class FrameTest {
     @Test
     public void testReadPoFrame() throws IOException {
         String frameStr = "publ 0000000059 0000000410\n" +
-                "po 1.2.3.4:25 11\n" +
+                "po 1.2.3.4: 11\n" +
                 "testPayload\n" +
                 "end\n";
         byte[] frameContent = frameStr.getBytes(StandardCharsets.UTF_8);
@@ -82,7 +82,7 @@ public class FrameTest {
         assertTrue(frame.getRoutingObjects().isEmpty());
         assertEquals(frame.getPayloadObjects().size(), 1);
 
-        PayloadObject.Type expectedType = new PayloadObject.Type(new byte[]{1, 2, 3, 4}, 25);
+        PayloadObject.Type expectedType = new PayloadObject.Type(new byte[]{1, 2, 3, 4});
         byte[] expectedContents = "testPayload".getBytes(StandardCharsets.UTF_8);
         PayloadObject expectedPayload = new PayloadObject(expectedType, expectedContents);
         assertEquals(expectedPayload, frame.getPayloadObjects().get(0));
