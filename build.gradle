@@ -1,7 +1,13 @@
+plugins {
+  id 'java'
+  id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
 group 'edu.berkeley.cs.sdb'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 repositories {
     mavenCentral()
