@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'edu.berkeley.cs.sdb'
-version '1.0-SNAPSHOT'
+version '0.1'
 
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
