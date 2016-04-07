@@ -17,6 +17,8 @@ import static org.junit.Assert.assertTrue;
 
 public class BosswaveClientTest {
 
+    private static final String BW_URI = "jkolb/unitTest";
+    private static final String BW_PAC = "OLOiGYupfKwntyktwroOcIdx3oVO6jErLTfBkDUFgCA=";
     private static final int BW_PORT = 28589;
     private static final Set<String> expectedMessages = new HashSet<String>();
     static {
@@ -35,10 +37,11 @@ public class BosswaveClientTest {
     public void setUp() throws IOException {
         // We assume a local Bosswave router is running
         client.connect();
-        client.setEntityFile(new File("/home/jack/bosswave/jack.key"), responseHandler);
+        client.setEntityFile(new File("/home/jack/bosswave/ethereal/unitTests.key"), responseHandler);
 
-        SubscribeRequest.Builder builder = new SubscribeRequest.Builder("castle.bw2.io/foo/bar").setExpiryDelta(3600000);
-        builder.setPrimaryAccessChain("lGhzBEz_uyAz2sOjJ9kmfyJEl1MakBZP3mKC-DNCNYE=");
+        SubscribeRequest.Builder builder = new SubscribeRequest.Builder(BW_URI).setExpiryDelta(3600000);
+        builder.setPrimaryAccessChain(BW_PAC);
+        builder.setChainElaborationLevel(ChainElaborationLevel.FULL);
         SubscribeRequest request = builder.build();
         client.subscribe(request, new ResponseHandler() {
             @Override
@@ -61,8 +64,9 @@ public class BosswaveClientTest {
     public void testPublish() throws IOException, InterruptedException {
         sem.acquire(); // Block until the subscribe operation is complete
 
-        PublishRequest.Builder builder = new PublishRequest.Builder("castle.bw2.io/foo/bar");
-        builder.setPrimaryAccessChain("lGhzBEz_uyAz2sOjJ9kmfyJEl1MakBZP3mKC-DNCNYE=");
+        PublishRequest.Builder builder = new PublishRequest.Builder(BW_URI);
+        builder.setPrimaryAccessChain(BW_PAC);
+        builder.setChainElaborationLevel(ChainElaborationLevel.FULL);
 
         for (String msg : expectedMessages) {
             builder.clearPayloadObjects();
@@ -82,7 +86,7 @@ public class BosswaveClientTest {
         @Override
         public void onResponseReceived(Response result) {
             if (!result.getStatus().equals("okay")) {
-                throw new RuntimeException("Bosswave operation failed");
+                throw new RuntimeException("Bosswave operation failed: " + result.getReason());
             }
         }
     }
@@ -103,7 +107,7 @@ public class BosswaveClientTest {
             try {
                 messageText = new String(messageContent, CharEncoding.UTF_8);
             } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("Platforom doesn't support UTF-8", e);
+                throw new RuntimeException("Platform doesn't support UTF-8", e);
             }
             assertTrue(expectedMessages.contains(messageText));
             counter++;

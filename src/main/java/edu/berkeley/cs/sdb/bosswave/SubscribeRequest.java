@@ -85,7 +85,7 @@ public class SubscribeRequest {
         public Builder(String uri) {
             this.uri = uri;
             doVerify = false;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.PARTIAL;
             autoChain = false;
             routingObjects = new ArrayList<RoutingObject>();
             leavePacked = false;
@@ -147,7 +147,7 @@ public class SubscribeRequest {
 
         public void clearAll() {
             doVerify = false;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.NONE;
             autoChain = false;
             leavePacked = false;
             routingObjects.clear();

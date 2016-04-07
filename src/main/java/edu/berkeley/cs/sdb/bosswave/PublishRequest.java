@@ -92,7 +92,7 @@ public class PublishRequest {
         public Builder(String uri) {
             this.uri = uri;
             doVerify = false;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.PARTIAL;
             autoChain = false;
             routingObjects = new ArrayList<RoutingObject>();
             payloadObjects = new ArrayList<PayloadObject>();
@@ -163,7 +163,7 @@ public class PublishRequest {
 
         public void clearAll() {
             doVerify = false;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.NONE;
             autoChain = false;
             routingObjects.clear();
             payloadObjects.clear();

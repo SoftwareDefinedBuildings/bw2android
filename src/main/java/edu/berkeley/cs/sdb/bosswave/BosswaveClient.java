@@ -84,7 +84,7 @@ public class BosswaveClient implements Closeable {
     private void setEntity(byte[] keyFile, ResponseHandler handler) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.SET_ENTITY, seqNo);
-        PayloadObject.Type type = new PayloadObject.Type(new byte[]{1, 0, 1, 2});
+        PayloadObject.Type type = new PayloadObject.Type(new byte[]{0, 0, 0, 50});
         PayloadObject po = new PayloadObject(type, keyFile);
         builder.addPayloadObject(po);
 
@@ -130,7 +130,7 @@ public class BosswaveClient implements Closeable {
         builder.addKVPair("doverify", Boolean.toString(request.doVerify()));
 
         ChainElaborationLevel level = request.getChainElaborationLevel();
-        if (level != ChainElaborationLevel.UNSPECIFIED) {
+        if (level != ChainElaborationLevel.NONE) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
@@ -176,7 +176,7 @@ public class BosswaveClient implements Closeable {
         builder.addKVPair("doverify", Boolean.toString(request.doVerify()));
 
         ChainElaborationLevel level = request.getChainElaborationLevel();
-        if (level != ChainElaborationLevel.UNSPECIFIED) {
+        if (level != ChainElaborationLevel.NONE) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
@@ -225,7 +225,7 @@ public class BosswaveClient implements Closeable {
         }
 
         ChainElaborationLevel level = request.getElabLevel();
-        if (level != ChainElaborationLevel.UNSPECIFIED) {
+        if (level != ChainElaborationLevel.NONE) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
@@ -269,7 +269,7 @@ public class BosswaveClient implements Closeable {
         }
 
         ChainElaborationLevel level = request.getElabLevel();
-        if (level != ChainElaborationLevel.UNSPECIFIED) {
+        if (level != ChainElaborationLevel.NONE) {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 

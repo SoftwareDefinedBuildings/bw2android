@@ -1,7 +1,7 @@
 package edu.berkeley.cs.sdb.bosswave;
 
 public enum ChainElaborationLevel {
-    UNSPECIFIED,
+    NONE,
     PARTIAL,
     FULL;
 }

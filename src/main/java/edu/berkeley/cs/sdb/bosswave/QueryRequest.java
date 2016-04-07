@@ -76,7 +76,7 @@ public class QueryRequest {
 
         public Builder(String uri) {
             this.uri = uri;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.PARTIAL;
             autoChain = false;
             leavePacked = false;
             routingObjects = new ArrayList<RoutingObject>();
@@ -132,7 +132,7 @@ public class QueryRequest {
         }
 
         public void clearAll() {
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.NONE;
             autoChain = false;
             leavePacked = false;
             routingObjects.clear();

@@ -69,7 +69,7 @@ public class ListRequest {
 
         public Builder(String uri) {
             this.uri = uri;
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.PARTIAL;
             autoChain = false;
             routingObjects = new ArrayList<RoutingObject>();
         }
@@ -118,7 +118,7 @@ public class ListRequest {
         }
 
         public void clearAll() {
-            elabLevel = ChainElaborationLevel.UNSPECIFIED;
+            elabLevel = ChainElaborationLevel.NONE;
             autoChain = false;
             routingObjects.clear();
         }
