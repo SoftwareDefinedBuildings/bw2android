@@ -37,7 +37,7 @@ public class BosswaveClientTest {
     public void setUp() throws IOException {
         // We assume a local Bosswave router is running
         client.connect();
-        client.setEntityFile(new File("/home/jack/bosswave/ethereal/unitTests.key"), responseHandler);
+        client.setEntityFile(new File(getClass().getResource("/unitTests.key").getPath()), responseHandler);
 
         SubscribeRequest.Builder builder = new SubscribeRequest.Builder(BW_URI).setExpiryDelta(3600000);
         builder.setPrimaryAccessChain(BW_PAC);
