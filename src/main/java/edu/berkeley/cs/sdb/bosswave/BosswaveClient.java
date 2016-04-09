@@ -14,10 +14,13 @@ import java.util.List;
 import java.util.Map;
 
 public class BosswaveClient implements Closeable {
+    private static final int SOCKET_TIMEOUT_MS = 2000;
+
     private final DateTimeFormatter Rfc3339 = ISODateTimeFormat.dateTime();
 
     private final String hostName;
     private final int port;
+    private final BWListener listener;
     private final Thread listenerThread;
 
     private final Map<Integer, ResponseHandler> responseHandlers;
@@ -34,18 +37,20 @@ public class BosswaveClient implements Closeable {
     public BosswaveClient(String hostName, int port) {
         this.hostName = hostName;
         this.port = port;
-        listenerThread = new Thread(new BWListener());
+        listener = new BWListener();
+        listenerThread = new Thread(listener);
 
         responseHandlers = new HashMap<Integer, ResponseHandler>();
         responseHandlerLock = new Object();
         messageHandlers = new HashMap<Integer, MessageHandler>();
         messageHandlersLock = new Object();
-        listResultHandlers  = new HashMap<Integer, ListResultHandler>();
+        listResultHandlers = new HashMap<Integer, ListResultHandler>();
         listResultHandlersLock = new Object();
     }
 
     public void connect() throws IOException {
         socket = new Socket(hostName, port);
+        socket.setSoTimeout(SOCKET_TIMEOUT_MS);
         inStream = new BufferedInputStream(socket.getInputStream());
         outStream = new BufferedOutputStream(socket.getOutputStream());
 
@@ -66,19 +71,25 @@ public class BosswaveClient implements Closeable {
 
     @Override
     public void close() throws IOException {
+        listener.stop();
         inStream.close();
         outStream.close();
         socket.close();
     }
 
     public void setEntityFile(File f, ResponseHandler handler) throws IOException {
-        BufferedInputStream stream = new BufferedInputStream(new FileInputStream(f));
-        byte[] keyFile = new byte[(int) (f.length() - 1)];
-        stream.read(); // Strip the first byte
-        stream.read(keyFile, 0, keyFile.length);
-        stream.close();
-
-        setEntity(keyFile, handler);
+        BufferedInputStream stream = null;
+        try {
+            stream = new BufferedInputStream(new FileInputStream(f));
+            byte[] keyFile = new byte[(int) (f.length() - 1)];
+            stream.read(); // Strip the first byte
+            stream.read(keyFile, 0, keyFile.length);
+            setEntity(keyFile, handler);
+        } finally {
+            if (stream != null) {
+                stream.close();
+            }
+        }
     }
 
     private void setEntity(byte[] keyFile, ResponseHandler handler) throws IOException {
@@ -428,10 +439,17 @@ public class BosswaveClient implements Closeable {
     }
 
     private class BWListener implements Runnable {
+
+        private volatile boolean continueRunning;
+
+        public BWListener() {
+            continueRunning = true;
+        }
+
         @Override
         public void run() {
-            try {
-                while (true) {
+            while (continueRunning) {
+                try {
                     Frame frame = Frame.readFromStream(inStream);
                     int seqNo = frame.getSeqNo();
 
@@ -496,14 +514,19 @@ public class BosswaveClient implements Closeable {
                         default:
                             // Ignore frames with any other commands
                     }
+                } catch (InvalidFrameException e) {
+                    // Ignore invalid frames
+                } catch (SocketException e) {
+                    // This should only occur when we are terminating the client and is safe to ignore
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // We'll attempt to keep running - use `stop` so safely stop listener
                 }
-            } catch (InvalidFrameException e) {
-                // Ignore invalid frames
-            } catch (SocketException e) {
-                // This should only occur when we are terminating the client and is safe to ignore
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read frame", e);
             }
+        }
+
+        public void stop() {
+            continueRunning = false;
         }
     }
 }
