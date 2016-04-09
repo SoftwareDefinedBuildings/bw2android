@@ -75,6 +75,12 @@ public class BosswaveClient implements Closeable {
         inStream.close();
         outStream.close();
         socket.close();
+
+        try {
+            listenerThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Failed to join listener thread", e);
+        }
     }
 
     public void setEntityFile(File f, ResponseHandler handler) throws IOException {
