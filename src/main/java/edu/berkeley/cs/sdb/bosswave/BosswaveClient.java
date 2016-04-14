@@ -8,6 +8,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -524,6 +525,8 @@ public class BosswaveClient implements Closeable {
                     // Ignore invalid frames
                 } catch (SocketException e) {
                     // This should only occur when we are terminating the client and is safe to ignore
+                } catch (SocketTimeoutException e) {
+                    // This just happens when the socket times out during normal operation -- ignore
                 } catch (IOException e) {
                     e.printStackTrace();
                     // We'll attempt to keep running - use `stop` so safely stop listener
