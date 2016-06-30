@@ -17,9 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 public class BosswaveClientTest {
 
-    private static final String BW_URI = "jkolb/unitTest";
-    private static final String BW_PAC = "OLOiGYupfKwntyktwroOcIdx3oVO6jErLTfBkDUFgCA=";
-    private static final int BW_PORT = 28589;
+    private static final String BW_URI = "scratch.ns/unittests/android";
     private static final Set<String> expectedMessages = new HashSet<String>();
     static {
         expectedMessages.add("Hello, World!");
@@ -29,19 +27,18 @@ public class BosswaveClientTest {
     }
 
     private final Semaphore sem = new Semaphore(0);
-    private final BosswaveClient client = new BosswaveClient("localhost", BW_PORT);
+    private BosswaveClient client;
     private final TestResponseHandler responseHandler = new TestResponseHandler();
     private final TestMessageHandler messageHandler = new TestMessageHandler();
 
     @Before
     public void setUp() throws IOException {
         // We assume a local Bosswave router is running
-        client.connect();
+        client = new BosswaveClient("localhost", BosswaveClient.DEFAULT_PORT);
         client.setEntityFile(new File(getClass().getResource("/unitTests.key").getPath()), responseHandler);
+        client.overrideAutoChainTo(true);
 
-        SubscribeRequest.Builder builder = new SubscribeRequest.Builder(BW_URI).setExpiryDelta(3600000);
-        builder.setPrimaryAccessChain(BW_PAC);
-        builder.setChainElaborationLevel(ChainElaborationLevel.FULL);
+        SubscribeRequest.Builder builder = new SubscribeRequest.Builder(BW_URI);
         SubscribeRequest request = builder.build();
         client.subscribe(request, new ResponseHandler() {
             @Override
@@ -65,8 +62,6 @@ public class BosswaveClientTest {
         sem.acquire(); // Block until the subscribe operation is complete
 
         PublishRequest.Builder builder = new PublishRequest.Builder(BW_URI);
-        builder.setPrimaryAccessChain(BW_PAC);
-        builder.setChainElaborationLevel(ChainElaborationLevel.FULL);
 
         for (String msg : expectedMessages) {
             builder.clearPayloadObjects();

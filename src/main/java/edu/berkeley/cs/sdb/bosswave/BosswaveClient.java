@@ -15,12 +15,11 @@ import java.util.List;
 import java.util.Map;
 
 public class BosswaveClient implements Closeable {
+    public static final int DEFAULT_PORT = 28589;
     private static final int SOCKET_TIMEOUT_MS = 2000;
 
     private final DateTimeFormatter Rfc3339 = ISODateTimeFormat.dateTime();
 
-    private final String hostName;
-    private final int port;
     private final BWListener listener;
     private final Thread listenerThread;
 
@@ -31,13 +30,13 @@ public class BosswaveClient implements Closeable {
     private final Map<Integer, ListResultHandler> listResultHandlers;
     private final Object listResultHandlersLock;
 
+    private Boolean autoChainOverride;
+
     private Socket socket;
     private BufferedInputStream inStream;
     private BufferedOutputStream outStream;
 
-    public BosswaveClient(String hostName, int port) {
-        this.hostName = hostName;
-        this.port = port;
+    public BosswaveClient(String hostName, int port) throws IOException {
         listener = new BWListener();
         listenerThread = new Thread(listener);
 
@@ -47,9 +46,7 @@ public class BosswaveClient implements Closeable {
         messageHandlersLock = new Object();
         listResultHandlers = new HashMap<Integer, ListResultHandler>();
         listResultHandlersLock = new Object();
-    }
 
-    public void connect() throws IOException {
         socket = new Socket(hostName, port);
         socket.setSoTimeout(SOCKET_TIMEOUT_MS);
         inStream = new BufferedInputStream(socket.getInputStream());
@@ -59,23 +56,28 @@ public class BosswaveClient implements Closeable {
         try {
             Frame frame = Frame.readFromStream(inStream);
             if (frame.getCommand() != Command.HELLO) {
-                close();
-                throw new RuntimeException("Received invalid Bosswave ACK");
+                throw new InvalidFrameException("Received invalid Bosswave ACK");
             }
         } catch (InvalidFrameException e) {
-            socket.close();
+            close();
             throw new RuntimeException(e);
         }
 
         listenerThread.start();
     }
 
+    public void overrideAutoChainTo(boolean autoChain) {
+        autoChainOverride = autoChain;
+    }
+
     @Override
     public void close() throws IOException {
         listener.stop();
-        inStream.close();
-        outStream.close();
-        socket.close();
+        if (socket != null) {
+            inStream.close();
+            outStream.close();
+            socket.close();
+        }
 
         try {
             listenerThread.join();
@@ -152,7 +154,9 @@ public class BosswaveClient implements Closeable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
-        if (request.autoChain()) {
+        if (autoChainOverride != null) {
+            builder.addKVPair("autochain", autoChainOverride.toString());
+        } else if (request.autoChain()) {
             builder.addKVPair("autochain", "true");
         }
 
@@ -198,7 +202,9 @@ public class BosswaveClient implements Closeable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
-        if (request.autoChain()) {
+        if (autoChainOverride != null) {
+            builder.addKVPair("autochain", autoChainOverride.toString());
+        } else if (request.autoChain()) {
             builder.addKVPair("autochain", "true");
         }
 
@@ -247,7 +253,9 @@ public class BosswaveClient implements Closeable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
-        if (request.autoChain()) {
+        if (autoChainOverride != null) {
+            builder.addKVPair("autochain", autoChainOverride.toString());
+        } else if (request.autoChain()) {
             builder.addKVPair("autochain", "true");
         }
 
@@ -291,7 +299,9 @@ public class BosswaveClient implements Closeable {
             builder.addKVPair("elaborate_pac", level.toString().toLowerCase());
         }
 
-        if (request.autoChain()) {
+        if (autoChainOverride != null) {
+            builder.addKVPair("autochain", autoChainOverride.toString());
+        } else if (request.autoChain()) {
             builder.addKVPair("autochain", "true");
         }
 
