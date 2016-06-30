@@ -35,7 +35,7 @@ public class BosswaveClientTest {
     public void setUp() throws IOException {
         // We assume a local Bosswave router is running
         client = new BosswaveClient("localhost", BosswaveClient.DEFAULT_PORT);
-        client.setEntityFile(new File(getClass().getResource("/unitTests.key").getPath()), responseHandler);
+        client.setEntityFromFile(new File(getClass().getResource("/unitTests.key").getPath()), responseHandler);
         client.overrideAutoChainTo(true);
 
         SubscribeRequest.Builder builder = new SubscribeRequest.Builder(BW_URI);

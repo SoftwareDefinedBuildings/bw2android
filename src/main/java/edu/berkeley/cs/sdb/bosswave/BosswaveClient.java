@@ -86,7 +86,7 @@ public class BosswaveClient implements Closeable {
         }
     }
 
-    public void setEntityFile(File f, ResponseHandler handler) throws IOException {
+    public void setEntityFromFile(File f, ResponseHandler handler) throws IOException {
         BufferedInputStream stream = null;
         try {
             stream = new BufferedInputStream(new FileInputStream(f));
@@ -324,7 +324,7 @@ public class BosswaveClient implements Closeable {
         }
     }
 
-    public void makeEntity(MakeEntityRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+    public void makeEntity(MakeEntityRequest request, ResponseHandler rh) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.MAKE_ENTITY, seqNo);
 
@@ -360,12 +360,9 @@ public class BosswaveClient implements Closeable {
         if (rh != null) {
             installResponseHandler(seqNo, rh);
         }
-        if (mh != null) {
-            installMessageHandler(seqNo, mh);
-        }
     }
 
-    public void makeDot(MakeDotRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+    public void makeDot(MakeDotRequest request, ResponseHandler rh) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.MAKE_DOT, seqNo);
 
@@ -413,10 +410,17 @@ public class BosswaveClient implements Closeable {
         if (uri != null) {
             builder.addKVPair("uri", uri);
         }
+
+        Frame f = builder.build();
+        f.writeToStream(outStream);
+        outStream.flush();
+        if (rh != null) {
+            installResponseHandler(seqNo, rh);
+        }
     }
 
     public void makeChain(boolean isPermission, boolean unelaborate, List<String> dots,
-                          ResponseHandler rh, MessageHandler mh) throws IOException {
+                          ResponseHandler rh) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.MAKE_CHAIN, seqNo);
 
@@ -431,9 +435,6 @@ public class BosswaveClient implements Closeable {
         outStream.flush();
         if (rh != null) {
             installResponseHandler(seqNo, rh);
-        }
-        if (mh != null) {
-            installMessageHandler(seqNo, mh);
         }
     }
 
@@ -475,13 +476,20 @@ public class BosswaveClient implements Closeable {
                         case RESPONSE: {
                             ResponseHandler responseHandler;
                             synchronized (responseHandlerLock) {
-                                responseHandler = responseHandlers.get(seqNo);
+                                responseHandler = responseHandlers.remove(seqNo);
                             }
                             if (responseHandler != null) {
                                 String status = new String(frame.getFirstValue("status"), CharEncoding.UTF_8);
                                 String reason = null;
                                 if (!status.equals("okay")) {
                                     reason = new String(frame.getFirstValue("reason"), CharEncoding.UTF_8);
+                                    // Upon error, we also need to clean up any result handlers
+                                    synchronized (messageHandlersLock) {
+                                        messageHandlers.remove(seqNo);
+                                    }
+                                    synchronized (listResultHandlersLock) {
+                                        listResultHandlers.remove(seqNo);
+                                    }
                                 }
                                 responseHandler.onResponseReceived(new Response(status, reason));
                             }
@@ -489,13 +497,23 @@ public class BosswaveClient implements Closeable {
                         }
 
                         case RESULT: {
+                            String finishedStr = new String(frame.getFirstValue("finished"), CharEncoding.UTF_8);
+                            boolean finished = Boolean.parseBoolean(finishedStr);
                             MessageHandler messageHandler;
                             synchronized (messageHandlersLock) {
-                                messageHandler = messageHandlers.get(seqNo);
+                                if (finished) {
+                                    messageHandler = messageHandlers.remove(seqNo);
+                                } else {
+                                    messageHandler = messageHandlers.get(seqNo);
+                                }
                             }
                             ListResultHandler listResultHandler;
                             synchronized (listResultHandlersLock) {
-                                listResultHandler = listResultHandlers.get(seqNo);
+                                if (finished) {
+                                    listResultHandler = listResultHandlers.remove(seqNo);
+                                } else {
+                                    listResultHandler = listResultHandlers.get(seqNo);
+                                }
                             }
 
                             if (messageHandler != null) {
@@ -516,8 +534,6 @@ public class BosswaveClient implements Closeable {
                                 }
                                 messageHandler.onResultReceived(msg);
                             } else if (listResultHandler != null) {
-                                String finishedStr = new String(frame.getFirstValue("finished"), CharEncoding.UTF_8);
-                                boolean finished = Boolean.parseBoolean(finishedStr);
                                 if (finished) {
                                     listResultHandler.finish();
                                 } else {
