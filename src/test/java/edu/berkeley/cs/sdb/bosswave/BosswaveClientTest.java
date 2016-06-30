@@ -65,7 +65,7 @@ public class BosswaveClientTest {
 
         for (String msg : expectedMessages) {
             builder.clearPayloadObjects();
-            PayloadObject.Type poType = new PayloadObject.Type(new byte[]{64, 0, 0, 0});
+            PayloadObject.Type poType = new PayloadObject.Type(POAllocations.PODFText);
             byte[] poContents = msg.getBytes(CharEncoding.UTF_8);
             PayloadObject po = new PayloadObject(poType, poContents);
             builder.addPayloadObject(po);
