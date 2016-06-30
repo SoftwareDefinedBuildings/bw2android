@@ -29,7 +29,7 @@ public class BosswaveClientTest {
     private final Semaphore sem = new Semaphore(0);
     private BosswaveClient client;
     private final TestResponseHandler responseHandler = new TestResponseHandler();
-    private final TestMessageHandler messageHandler = new TestMessageHandler();
+    private final TestResultHandler resultHandler = new TestResultHandler();
 
     @Before
     public void setUp() throws IOException {
@@ -42,14 +42,14 @@ public class BosswaveClientTest {
         SubscribeRequest request = builder.build();
         client.subscribe(request, new ResponseHandler() {
             @Override
-            public void onResponseReceived(Response result) {
-                if (result.getStatus().equals("okay")) {
+            public void onResponseReceived(BosswaveResponse response) {
+                if (response.getStatus().equals("okay")) {
                     sem.release();
                 } else {
-                    throw new RuntimeException("Failed to subscribe: " + result.getReason());
+                    throw new RuntimeException("Failed to subscribe: " + response.getReason());
                 }
             }
-        }, messageHandler);
+        }, resultHandler);
     }
 
     @After
@@ -79,25 +79,25 @@ public class BosswaveClientTest {
 
     private static class TestResponseHandler implements ResponseHandler {
         @Override
-        public void onResponseReceived(Response result) {
-            if (!result.getStatus().equals("okay")) {
-                throw new RuntimeException("Bosswave operation failed: " + result.getReason());
+        public void onResponseReceived(BosswaveResponse response) {
+            if (!response.getStatus().equals("okay")) {
+                throw new RuntimeException("Bosswave operation failed: " + response.getReason());
             }
         }
     }
 
-    private class TestMessageHandler implements MessageHandler {
+    private class TestResultHandler implements ResultHandler {
 
         private int counter;
 
-        public TestMessageHandler() {
+        public TestResultHandler() {
             counter = 0;
         }
 
         @Override
-        public void onResultReceived(Message message) {
-            assertEquals(message.getPayloadObjects().size(), 1);
-            byte[] messageContent = message.getPayloadObjects().get(0).getContent();
+        public void onResultReceived(BosswaveResult result) {
+            assertEquals(result.getPayloadObjects().size(), 1);
+            byte[] messageContent = result.getPayloadObjects().get(0).getContent();
             String messageText;
             try {
                 messageText = new String(messageContent, CharEncoding.UTF_8);

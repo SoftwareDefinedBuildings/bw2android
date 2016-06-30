@@ -25,7 +25,7 @@ public class BosswaveClient implements Closeable {
 
     private final Map<Integer, ResponseHandler> responseHandlers;
     private final Object responseHandlerLock;
-    private final Map<Integer, MessageHandler> messageHandlers;
+    private final Map<Integer, ResultHandler> resultHandlers;
     private final Object messageHandlersLock;
     private final Map<Integer, ListResultHandler> listResultHandlers;
     private final Object listResultHandlersLock;
@@ -42,7 +42,7 @@ public class BosswaveClient implements Closeable {
 
         responseHandlers = new HashMap<Integer, ResponseHandler>();
         responseHandlerLock = new Object();
-        messageHandlers = new HashMap<Integer, MessageHandler>();
+        resultHandlers = new HashMap<Integer, ResultHandler>();
         messageHandlersLock = new Object();
         listResultHandlers = new HashMap<Integer, ListResultHandler>();
         listResultHandlersLock = new Object();
@@ -173,7 +173,7 @@ public class BosswaveClient implements Closeable {
         installResponseHandler(seqNo, handler);
     }
 
-    public void subscribe(SubscribeRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+    public void subscribe(SubscribeRequest request, ResponseHandler rspH, ResultHandler rsltH) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.SUBSCRIBE, seqNo);
 
@@ -220,11 +220,11 @@ public class BosswaveClient implements Closeable {
         f.writeToStream(outStream);
         outStream.flush();
 
-        if (rh != null) {
-            installResponseHandler(seqNo, rh);
+        if (rspH != null) {
+            installResponseHandler(seqNo, rspH);
         }
-        if (mh != null) {
-            installMessageHandler(seqNo, mh);
+        if (rsltH != null) {
+            installResultHandler(seqNo, rsltH);
         }
     }
 
@@ -274,7 +274,7 @@ public class BosswaveClient implements Closeable {
         }
     }
 
-    public void query(QueryRequest request, ResponseHandler rh, MessageHandler mh) throws IOException {
+    public void query(QueryRequest request, ResponseHandler respH, ResultHandler rsltH) throws IOException {
         int seqNo = Frame.generateSequenceNumber();
         Frame.Builder builder = new Frame.Builder(Command.QUERY, seqNo);
 
@@ -316,11 +316,11 @@ public class BosswaveClient implements Closeable {
         Frame f = builder.build();
         f.writeToStream(outStream);
         outStream.flush();
-        if (rh != null) {
-            installResponseHandler(seqNo, rh);
+        if (respH != null) {
+            installResponseHandler(seqNo, respH);
         }
-        if (mh != null) {
-            installMessageHandler(seqNo, mh);
+        if (rsltH != null) {
+            installResultHandler(seqNo, rsltH);
         }
     }
 
@@ -444,9 +444,9 @@ public class BosswaveClient implements Closeable {
         }
     }
 
-    private void installMessageHandler(int seqNo, MessageHandler mh) {
+    private void installResultHandler(int seqNo, ResultHandler rh) {
         synchronized (messageHandlersLock) {
-            messageHandlers.put(seqNo, mh);
+            resultHandlers.put(seqNo, rh);
         }
     }
 
@@ -485,13 +485,13 @@ public class BosswaveClient implements Closeable {
                                     reason = new String(frame.getFirstValue("reason"), CharEncoding.UTF_8);
                                     // Upon error, we also need to clean up any result handlers
                                     synchronized (messageHandlersLock) {
-                                        messageHandlers.remove(seqNo);
+                                        resultHandlers.remove(seqNo);
                                     }
                                     synchronized (listResultHandlersLock) {
                                         listResultHandlers.remove(seqNo);
                                     }
                                 }
-                                responseHandler.onResponseReceived(new Response(status, reason));
+                                responseHandler.onResponseReceived(new BosswaveResponse(status, reason));
                             }
                             break;
                         }
@@ -499,12 +499,12 @@ public class BosswaveClient implements Closeable {
                         case RESULT: {
                             String finishedStr = new String(frame.getFirstValue("finished"), CharEncoding.UTF_8);
                             boolean finished = Boolean.parseBoolean(finishedStr);
-                            MessageHandler messageHandler;
+                            ResultHandler resultHandler;
                             synchronized (messageHandlersLock) {
                                 if (finished) {
-                                    messageHandler = messageHandlers.remove(seqNo);
+                                    resultHandler = resultHandlers.remove(seqNo);
                                 } else {
-                                    messageHandler = messageHandlers.get(seqNo);
+                                    resultHandler = resultHandlers.get(seqNo);
                                 }
                             }
                             ListResultHandler listResultHandler;
@@ -516,7 +516,7 @@ public class BosswaveClient implements Closeable {
                                 }
                             }
 
-                            if (messageHandler != null) {
+                            if (resultHandler != null) {
                                 String uri = new String(frame.getFirstValue("uri"), CharEncoding.UTF_8);
                                 String from = new String(frame.getFirstValue("from"), CharEncoding.UTF_8);
 
@@ -526,13 +526,13 @@ public class BosswaveClient implements Closeable {
                                     unpack = Boolean.parseBoolean(new String(unpackBytes, CharEncoding.UTF_8));
                                 }
 
-                                Message msg;
+                                BosswaveResult result;
                                 if (unpack) {
-                                    msg = new Message(from, uri, frame.getRoutingObjects(), frame.getPayloadObjects());
+                                    result = new BosswaveResult(from, uri, frame.getRoutingObjects(), frame.getPayloadObjects());
                                 } else {
-                                    msg = new Message(from, uri, null, null);
+                                    result = new BosswaveResult(from, uri, null, null);
                                 }
-                                messageHandler.onResultReceived(msg);
+                                resultHandler.onResultReceived(result);
                             } else if (listResultHandler != null) {
                                 if (finished) {
                                     listResultHandler.finish();

@@ -1,10 +1,10 @@
 package edu.berkeley.cs.sdb.bosswave;
 
-public class Response {
+public class BosswaveResponse {
     private final String status;
     private final String reason;
 
-    public Response(String status, String reason) {
+    public BosswaveResponse(String status, String reason) {
         this.status = status;
         this.reason = reason;
     }
